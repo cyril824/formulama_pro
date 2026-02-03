@@ -91,12 +91,18 @@ def api_ajouter_document():
 
     # 2. Enregistrement dans la base de données
     simulated_path = f"//localhost/data/{filename}" 
-    doc_id = ajouter_document(filename, simulated_path, categorie)
-    
-    if doc_id:
-        return jsonify({"message": "Document et BDD mis à jour avec succès", "id": doc_id}), 201 
-    else:
-        return jsonify({"error": "Erreur lors de l'insertion dans la base de données"}), 500
+    try:
+        doc_id = ajouter_document(filename, simulated_path, categorie)
+        
+        if doc_id:
+            return jsonify({"message": "Document et BDD mis à jour avec succès", "id": doc_id}), 201 
+        else:
+            return jsonify({"error": "Erreur lors de l'insertion dans la base de données"}), 500
+    except Exception as e:
+        print(f"🛑 Erreur lors de l'ajout du document en BDD: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Erreur lors de l'insertion en BDD: {str(e)}"}), 500
 
 # 4. Endpoint pour récupérer les documents par catégorie (Méthode GET)
 @app.route('/api/documents/<categorie>', methods=['GET'])
