@@ -1,0 +1,8 @@
+# Dossier data - Contient les documents et fichiers générés par l'application
+# 
+# Ce dossier est ignoré par Git pour préserver la confidentialité.
+# 
+# À faire lors de la première installation:
+# 1. Copier ce dossier: cp -r data.example data
+# 2. Ajouter vos documents et fichiers de données dedans
+# 3. La base de données sera créée automatiquement au lancement de l'application
