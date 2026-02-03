@@ -66,7 +66,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter basename="/app">
+            <BrowserRouter>
               {/* Suspense permet d'afficher un indicateur de chargement pendant le chargement dynamique du composant */}
               <Suspense fallback={<FallbackLoader />}>
                 <AppRoutes />

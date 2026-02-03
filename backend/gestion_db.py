@@ -5,7 +5,7 @@ import os
 # Chemin vers la base de données (chemin absolu pour éviter les problèmes relatifs)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-DB_NAME = os.path.join(PROJECT_ROOT, 'data', 'documents.db') 
+DB_NAME = os.path.join(PROJECT_ROOT, 'data', 'pro.db') 
 
 def supprimer_document(doc_id: int):
     """
@@ -62,20 +62,20 @@ def initialiser_base_de_donnees():
         if 'is_signed' not in columns:
             cursor.execute("ALTER TABLE documents ADD COLUMN is_signed BOOLEAN DEFAULT 0")
             conn.commit()
-            print("✅ Colonne 'is_signed' ajoutée à la table 'documents'.")
+            print("[OK] Colonne 'is_signed' ajoutée à la table 'documents'.")
         
         # Ajouter la colonne is_filled si elle n'existe pas
         if 'is_filled' not in columns:
             cursor.execute("ALTER TABLE documents ADD COLUMN is_filled BOOLEAN DEFAULT 0")
             conn.commit()
-            print("✅ Colonne 'is_filled' ajoutée à la table 'documents'.")
+            print("[OK] Colonne 'is_filled' ajoutée à la table 'documents'.")
         
-        print(f"✅ Base de données '{DB_NAME}' initialisée avec succès.")
+        print(f"[OK] Base de données '{DB_NAME}' initialisée avec succès.")
 
     except sqlite3.Error as e:
-        print(f"🛑 Erreur lors de l'initialisation de la base de données : {e}")
+        print(f"[ERREUR] Erreur lors de l'initialisation de la base de données : {e}")
     except Exception as e:
-        print(f"🛑 Erreur système lors de l'initialisation : {e}")
+        print(f"[ERREUR] Erreur système lors de l'initialisation : {e}")
     finally:
         if conn:
             conn.close()

@@ -16,10 +16,15 @@ CORS(app)
 
 # --- DÉFINITION DU CHEMIN DU DOSSIER DE DONNÉES ---
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DIST_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'dist')
 DATA_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'data')
 SIGNATURES_FOLDER_PATH = os.path.join(DATA_FOLDER_PATH, 'signatures')
 # Créer le dossier des signatures s'il n'existe pas
 os.makedirs(SIGNATURES_FOLDER_PATH, exist_ok=True)
+print(f"[DEBUG] PROJECT_ROOT: {PROJECT_ROOT}")
+print(f"[DEBUG] DIST_FOLDER_PATH: {DIST_FOLDER_PATH}")
+print(f"[DEBUG] DIST exists: {os.path.exists(DIST_FOLDER_PATH)}")
+print(f"[DEBUG] index.html exists: {os.path.exists(os.path.join(DIST_FOLDER_PATH, 'index.html'))}")
 # ----------------------------------------------------
 
 # --- FONCTION UTILITAIRE POUR LE MIME TYPE ---
@@ -54,11 +59,6 @@ def save_signature(doc_id, signature_base64):
         print(f"Erreur lors de la sauvegarde de la signature: {e}")
         return False
 
-
-# 2. Point d'accès de base
-@app.route('/')
-def home():
-    return "Serveur API Python pour Formulama actif!"
 
 # 3. Endpoint pour ajouter un document (Méthode POST) - GÈRE L'UPLOAD DU FICHIER
 @app.route('/api/documents/ajouter', methods=['POST'])
@@ -302,9 +302,62 @@ def serve_document_file(filename):
         print(f"Erreur lors de la lecture du fichier: {e}")
         return jsonify({"error": "Fichier non trouvé"}), 404
 
+# ============================================
+# ROUTES POUR SERVIR L'INTERFACE FRONTEND
+# ============================================
+
+# Les routes spécifiques DOIVENT être avant le wildcard route
+# Sinon Flask va matcher le wildcard d'abord
+
+@app.route('/assets/<path:path>')
+def serve_assets(path):
+    """Sert les assets compilés"""
+    try:
+        assets_path = os.path.join(DIST_FOLDER_PATH, 'assets')
+        return send_from_directory(assets_path, path)
+    except Exception as e:
+        print(f"Asset not found: {path}")
+        return jsonify({"error": "Asset not found"}), 404
+
+@app.route('/index.html')
+@app.route('/')
+def serve_index():
+    """Affiche l'interface principale"""
+    try:
+        index_path = os.path.join(DIST_FOLDER_PATH, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory(DIST_FOLDER_PATH, 'index.html')
+        else:
+            return jsonify({"error": "index.html not found"}), 500
+    except Exception as e:
+        print(f"Erreur serve_index: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/<path:path>')
+def serve_spa(path):
+    """Fallback pour les routes SPA - sert index.html pour React Router"""
+    # NE PAS servir index.html pour les routes API
+    if path.startswith('api/'):
+        return jsonify({"error": "Not found"}), 404
+    
+    try:
+        # D'abord, vérifier si le fichier existe dans dist/
+        full_path = os.path.join(DIST_FOLDER_PATH, path)
+        if os.path.isfile(full_path):
+            return send_from_directory(DIST_FOLDER_PATH, path)
+        
+        # Pour tout autre chemin, servir index.html (React Router gère la navigation)
+        index_path = os.path.join(DIST_FOLDER_PATH, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory(DIST_FOLDER_PATH, 'index.html')
+    except Exception as e:
+        print(f"Erreur serve_spa: {e}")
+    
+    return jsonify({"error": "Not found"}), 404
+
 # 7. Lancement du serveur
 if __name__ == '__main__':
     initialiser_base_de_donnees()
     print(f"\n[INFO] Dossier de documents configuré : {DATA_FOLDER_PATH}\n")
-    # Lancement du serveur Flask sur le port 5000
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    # Lancement du serveur Flask sur le port 5001 - SANS DEBUG et SANS RELOADER pour éviter les problèmes en arrière-plan
+    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=5001)

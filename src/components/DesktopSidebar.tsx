@@ -1,4 +1,4 @@
-import { Archive, FileCheck, HelpCircle, Home } from "lucide-react";
+import { Archive, FileCheck, HelpCircle, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -64,6 +64,13 @@ const DesktopSidebar = () => {
           >
             <HelpCircle className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <span className="font-medium">Aide</span>
+          </button>
+          <button
+            onClick={() => window.location.href = 'http://localhost:8000'}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-600 transition-colors duration-150 hover:bg-red-500/10 hover:text-red-700"
+          >
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium">Déconnexion</span>
           </button>
         </div>
       </div>
