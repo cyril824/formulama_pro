@@ -83,10 +83,10 @@ def api_ajouter_document():
             os.makedirs(DATA_FOLDER_PATH) 
             
         f.save(file_path) 
-        print(f"✅ Fichier sauvegardé physiquement à: {file_path}")
+        print(f"[OK] Fichier sauvegardé physiquement à: {file_path}")
         
     except Exception as e:
-        print(f"🛑 Erreur de sauvegarde du fichier: {e}")
+        print(f"[ERROR] Erreur de sauvegarde du fichier: {e}")
         return jsonify({"error": f"Échec de la sauvegarde physique du fichier sur le serveur: {e}"}), 500
 
     # 2. Enregistrement dans la base de données
@@ -99,7 +99,7 @@ def api_ajouter_document():
         else:
             return jsonify({"error": "Erreur lors de l'insertion dans la base de données"}), 500
     except Exception as e:
-        print(f"🛑 Erreur lors de l'ajout du document en BDD: {e}")
+        print(f"[ERROR] Erreur lors de l'ajout du document en BDD: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Erreur lors de l'insertion en BDD: {str(e)}"}), 500
