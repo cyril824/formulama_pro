@@ -25,7 +25,7 @@ const Login = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => window.location.href = '/'}
+          onClick={() => window.location.href = 'http://localhost:8000'}
           className="gap-1 sm:gap-2 text-primary/80 hover:text-primary hover:bg-primary/5 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-auto transition-colors duration-200"
         >
           <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
