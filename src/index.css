@@ -8,26 +8,79 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 42 45% 96%;
-    --foreground: 222 47% 11%;
+    /* Backgrounds & Foregrounds - Simples et neutres */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 0 0% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 13%;
+
+    /* Couleur Primaire - Bleu Simple */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Couleur Secondaire - Gris */
+    --secondary: 0 0% 55%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted - Gris Clair */
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent - Gris Léger */
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 13%;
+
+    /* Success, Destructive - Couleurs basiques */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Borders & Input - Gris subtil */
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.5rem;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 13%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .dark {
+    /* Dark Mode - Gris simples */
+    --background: 0 0% 9%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 15%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 42 40% 88%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 0 0% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 42 30% 92%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 42 50% 85%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 95%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -35,71 +88,17 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 42 25% 88%;
-    --input: 42 25% 90%;
+    --border: 0 0% 22%;
+    --input: 0 0% 18%;
     --ring: 217 91% 60%;
 
-    --radius: 0.75rem;
-    
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-soft: 0 2px 10px -2px hsl(222 47% 11% / 0.1);
-    --shadow-medium: 0 4px 20px -4px hsl(222 47% 11% / 0.15);
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222 40% 10%;
-    --foreground: 210 40% 96%;
-
-    --card: 222 35% 16%;
-    --card-foreground: 210 40% 96%;
-
-    --popover: 222 35% 16%;
-    --popover-foreground: 210 40% 96%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 217 35% 24%;
-    --secondary-foreground: 210 40% 96%;
-
-    --muted: 222 30% 26%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 217 45% 30%;
-    --accent-foreground: 210 40% 96%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 45%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 222 30% 24%;
-    --input: 222 30% 24%;
-    --ring: 217 91% 60%;
-    --sidebar-background: 222 40% 12%;
-    --sidebar-foreground: 210 40% 94%;
+    --sidebar-background: 0 0% 12%;
+    --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 30% 28%;
-    --sidebar-accent-foreground: 210 40% 94%;
-    --sidebar-border: 222 30% 24%;
+    --sidebar-accent: 0 0% 20%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 22%;
     --sidebar-ring: 217 91% 60%;
   }
 }
@@ -119,6 +118,14 @@ All colors MUST be HSL.
     color: hsl(var(--foreground));
     width: 100%;
     overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: 0;
   }
 }
 
