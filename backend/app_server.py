@@ -8,7 +8,7 @@ import base64
 import ssl
 
 # Importe toutes les fonctions nécessaires
-from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli, recuperer_toutes_categories 
+from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli, recuperer_toutes_categories, recuperer_stats 
 
 # 1. Configuration de l'application Flask
 app = Flask(__name__)
@@ -118,6 +118,16 @@ def api_recuperer_categories():
         return jsonify(category_names), 200
     except Exception as e:
         print(f"Erreur lors de la récupération des catégories: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+# Endpoint pour récupérer les statistiques des documents
+@app.route('/api/stats', methods=['GET'])
+def api_recuperer_stats():
+    try:
+        stats = recuperer_stats()
+        return jsonify(stats), 200
+    except Exception as e:
+        print(f"Erreur lors de la récupération des statistiques: {e}")
         return jsonify({"error": "Erreur interne du serveur"}), 500
 
 # ============================================

@@ -1,12 +1,48 @@
 import { Archive, FileCheck, HelpCircle, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getBaseUrl } from "@/lib/urlHelper";
+
+interface Stats {
+  total: number;
+  signes: number;
+  non_signes: number;
+  archives: number;
+  supportes: number;
+}
 
 const DesktopSidebar = () => {
   const navigate = useNavigate();
-  const [stats] = useState({ total: 5, archives: 2, supportes: 3 });
+  const [stats, setStats] = useState<Stats>({ 
+    total: 0, 
+    signes: 0, 
+    non_signes: 0,
+    archives: 0, 
+    supportes: 0 
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la récupération des statistiques:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+    // Rafraîchir les statistiques toutes les 5 secondes
+    const interval = setInterval(fetchStats, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const menuItems = [
     { icon: Home, label: "Accueil", path: "/dashboard" },
@@ -47,11 +83,15 @@ const DesktopSidebar = () => {
         </div>
         <div className="flex items-center justify-between p-2 rounded bg-muted/40 text-sm">
           <span className="font-medium text-muted-foreground">Signés</span>
-          <span className="font-bold text-foreground">{stats.supportes}</span>
+          <span className="font-bold text-green-600">{stats.signes}</span>
+        </div>
+        <div className="flex items-center justify-between p-2 rounded bg-muted/40 text-sm">
+          <span className="font-medium text-muted-foreground">Non Signés</span>
+          <span className="font-bold text-red-600">{stats.non_signes}</span>
         </div>
         <div className="flex items-center justify-between p-2 rounded bg-muted/40 text-sm">
           <span className="font-medium text-muted-foreground">Archivés</span>
-          <span className="font-bold text-foreground">{stats.archives}</span>
+          <span className="font-bold text-orange-600">{stats.archives}</span>
         </div>
       </div>
 

@@ -367,3 +367,58 @@ def recuperer_toutes_categories():
             conn.close()
             
     return categories
+
+
+def recuperer_stats():
+    """
+    Récupère les statistiques des documents :
+    - total : nombre total de documents
+    - signes : nombre de documents signés
+    - non_signes : nombre de documents non signés
+    - archives : nombre de documents dans la catégorie "Documents archivés"
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+
+        # Total de documents
+        cursor.execute("SELECT COUNT(*) FROM documents")
+        total = cursor.fetchone()[0]
+
+        # Nombre de documents signés
+        cursor.execute("SELECT COUNT(*) FROM documents WHERE is_signed = 1")
+        signes = cursor.fetchone()[0]
+
+        # Nombre de documents non signés
+        cursor.execute("SELECT COUNT(*) FROM documents WHERE is_signed = 0")
+        non_signes = cursor.fetchone()[0]
+
+        # Nombre de documents archivés
+        cursor.execute("SELECT COUNT(*) FROM documents WHERE categorie = 'Documents archivés'")
+        archives = cursor.fetchone()[0]
+
+        # Nombre de documents supportés (non archivés)
+        cursor.execute("SELECT COUNT(*) FROM documents WHERE categorie != 'Documents archivés'")
+        supportes = cursor.fetchone()[0]
+
+        return {
+            "total": total,
+            "signes": signes,
+            "non_signes": non_signes,
+            "archives": archives,
+            "supportes": supportes
+        }
+
+    except sqlite3.Error as e:
+        print(f"🛑 Erreur lors de la récupération des statistiques : {e}")
+        return {
+            "total": 0,
+            "signes": 0,
+            "non_signes": 0,
+            "archives": 0,
+            "supportes": 0
+        }
+    finally:
+        if conn:
+            conn.close()
