@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit2, Save, X, ChevronDown, Building2, Users, FileText, MapPin, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, ChevronDown, Building2, FileText, MapPin, Phone, DollarSign, Shield, Users, Globe, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentContext } from "@/context/DocumentContext";
 
-// Interface pour les données entreprise
+// Interface pour les établissements
 interface Etablissement {
   nom: string;
   adresse: string;
@@ -18,134 +18,129 @@ interface Etablissement {
   type: string;
 }
 
-interface RepresentantLegal {
-  civilite: string;
+// Interface pour les certifications
+interface Certification {
   nom: string;
-  prenom: string;
-  fonction: string;
-  email: string;
-  telephone: string;
-  typeDocument: string;
-  numeroDocument: string;
+  dateObtention: string;
   dateExpiration: string;
+  numero: string;
 }
 
+// Interface pour les données entreprise
 interface UserData {
-  // Informations Entreprise
+  // ==== IDENTIFICATION ENTREPRISE ====
   raisonSociale: string;
   siret: string;
   siren: string;
   numeroTVA: string;
+  codeAPE: string;
   secteurActivite: string;
   formeJuridique: string;
   dateCreation: string;
   capitalSocial: string;
   
-  // Sièges & Établissements
+  // ==== IMMATRICULATION & DOCUMENTS LÉGAUX ====
+  numeroImmatriculationRCS: string;
+  numeroKbis: string;
+  dateKbis: string;
+  numeroImmatriculationRM: string;
+  
+  // ==== ADRESSES & ÉTABLISSEMENTS ====
   etablissements: Etablissement[];
   
-  // Contact Entreprise
+  // ==== CONTACTS GÉNÉRAUX ====
   emailGeneral: string;
   telephoneGeneral: string;
   telephoneSecondaire: string;
   siteWeb: string;
+  reseauxSociaux: string;
   
-  // Représentant Légal
-  representantLegal: RepresentantLegal;
-  
-  // Données Bancaires Entreprise
+  // ==== DONNÉES BANCAIRES ====
   iban: string;
   bic: string;
   nomBanque: string;
   titulaireDuCompte: string;
   
-  // Informations Fiscales
+  // ==== FISCALITÉ ====
   numeroFiscal: string;
   regimeFiscal: string;
   chiffreAffairesAnnuel: string;
-  tauxTVA: string;
   beneficeOuPerte: string;
+  tauxTVA: string;
+  centreGestionAgree: string;
+  numeroCentreGestion: string;
   
-  // Assurances Professionnelles
+  // ==== ORGANISMES SOCIAUX ====
+  affiliationURSSAF: string;
+  numeroCompteURSSAF: string;
+  caisseretraite: string;
+  
+  // ==== ASSURANCES PROFESSIONNELLES ====
   rcProNumero: string;
   rcProAssureur: string;
   rcProDateExpiration: string;
   assuranceLocauxNumero: string;
   assuranceLocauxAssureur: string;
   assuranceLocauxDateExpiration: string;
-  autresAssurances: string;
+  assuranceAutoNumero: string;
+  assuranceAutoAssureur: string;
+  assuranceAutoDateExpiration: string;
+  assuranceCyberNumero: string;
+  assuranceCyberAssureur: string;
+  assuranceCyberDateExpiration: string;
   
-  // Documents Importants
-  attestationImmatriculation: string;
-  certificationNonRadiation: string;
-  datesStatuts: string;
+  // ==== CONFORMITÉ & NORMES ====
+  certifications: Certification[];
+  agrementParticulier: string;
   
-  // Contacts Supplémentaires
-  referentComptable: string;
-  emailComptable: string;
-  telephoneComptable: string;
-  avocat: string;
-  emailAvocat: string;
-  telephoneAvocat: string;
-  contactUrgence: string;
-  telephoneUrgence: string;
+  // ==== DONNÉES COMMERCIALES ====
+  effectifTotal: string;
+  zoneGeographique: string;
+  codificationSecteur: string;
+  
+  // ==== PROPRIÉTÉ INTELLECTUELLE ====
+  marquesDeposees: string;
+  brevets: string;
+  droitsAuteur: string;
+  
+  // ==== CONFORMITÉ ENVIRONNEMENTALE & LÉGALE ====
+  numeroICPE: string;
+  classificationEnvironnementale: string;
+  conformiteRGPD: string;
+  registreTraitementDonnees: string;
+  
+  // ==== INFORMATIONS COMMERCIALES ====
+  delaiMoyenPaiement: string;
+  modalitesFacturation: string;
+  conditionsReglement: string;
 }
-
-// Composant Section repliable pour mobile
-interface SectionProps {
-  title: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}
-
-const CollapsibleSection = ({ title, icon, children, defaultOpen = true }: SectionProps) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-secondary/50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          {icon && <div className="text-primary">{icon}</div>}
-          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        </div>
-        <ChevronDown
-          className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-      {isOpen && (
-        <div className="px-4 py-4 border-t border-border bg-card">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { documentChanged } = useDocumentContext();
 
-  // État des données entreprise avec valeurs par défaut
+  // État des données entreprise
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userData, setUserData] = useState<UserData>({
-    // Infos Entreprise
+    // IDENTIFICATION
     raisonSociale: "TechSolutions SARL",
     siret: "12345678901234",
     siren: "123456789",
     numeroTVA: "FR12345678901",
+    codeAPE: "6201Z",
     secteurActivite: "Services Informatiques",
     formeJuridique: "SARL",
     dateCreation: "2015-06-20",
     capitalSocial: "50000",
     
-    // Établissements
+    // IMMATRICULATION
+    numeroImmatriculationRCS: "123456789",
+    numeroKbis: "123456789001",
+    dateKbis: "2024-01-15",
+    numeroImmatriculationRM: "",
+    
+    // ÉTABLISSEMENTS
     etablissements: [
       {
         nom: "Siège Social",
@@ -157,7 +152,7 @@ const Profile = () => {
         type: "Siège"
       },
       {
-        nom: "Établissement Secondaire - Lyon",
+        nom: "Établissement Secondaire",
         adresse: "456 Rue de la Paix",
         codePostal: "69000",
         ville: "Lyon",
@@ -167,69 +162,83 @@ const Profile = () => {
       }
     ],
     
-    // Contact Entreprise
+    // CONTACTS
     emailGeneral: "contact@techsolutions.fr",
     telephoneGeneral: "+33 1 23 45 67 89",
     telephoneSecondaire: "+33 1 98 76 54 32",
     siteWeb: "www.techsolutions.fr",
+    reseauxSociaux: "LinkedIn: /techsolutions | Twitter: @techsol",
     
-    // Représentant Légal
-    representantLegal: {
-      civilite: "M",
-      nom: "Dupont",
-      prenom: "Jean",
-      fonction: "Gérant",
-      email: "jean.dupont@techsolutions.fr",
-      telephone: "+33 6 12 34 56 78",
-      typeDocument: "Passeport",
-      numeroDocument: "AB123456",
-      dateExpiration: "2030-06-30"
-    },
-    
-    // Données Bancaires
+    // DONNÉES BANCAIRES
     iban: "FR1420041010050500013M02606",
     bic: "BNAGFRPP",
     nomBanque: "BNP Paribas",
     titulaireDuCompte: "TechSolutions SARL",
     
-    // Fiscalité
+    // FISCALITÉ
     numeroFiscal: "12 345 678 901",
     regimeFiscal: "Réel",
     chiffreAffairesAnnuel: "250000",
-    tauxTVA: "20",
     beneficeOuPerte: "45000",
+    tauxTVA: "20",
+    centreGestionAgree: "CGA Nord Paris",
+    numeroCentreGestion: "75123456",
     
-    // Assurances Professionnelles
+    // ORGANISMES SOCIAUX
+    affiliationURSSAF: "Île-de-France",
+    numeroCompteURSSAF: "751234567890",
+    caisseretraite: "CARSAT Île-de-France",
+    
+    // ASSURANCES
     rcProNumero: "RC2024001234",
     rcProAssureur: "AXA Assurances",
     rcProDateExpiration: "2025-12-31",
     assuranceLocauxNumero: "LOC2024005678",
     assuranceLocauxAssureur: "Allianz",
     assuranceLocauxDateExpiration: "2025-12-31",
-    autresAssurances: "Assurance Cyber - XXL Assurances",
+    assuranceAutoNumero: "AUTO2024001234",
+    assuranceAutoAssureur: "MAAF",
+    assuranceAutoDateExpiration: "2025-06-30",
+    assuranceCyberNumero: "CYBER2024001234",
+    assuranceCyberAssureur: "XXL Assurances",
+    assuranceCyberDateExpiration: "2025-12-31",
     
-    // Documents
-    attestationImmatriculation: "Disponible",
-    certificationNonRadiation: "Disponible",
-    datesStatuts: "20/06/2015",
+    // CONFORMITÉ & NORMES
+    certifications: [
+      {
+        nom: "ISO 27001",
+        dateObtention: "2020-03-15",
+        dateExpiration: "2026-03-15",
+        numero: "CERT-ISO27001-2020"
+      }
+    ],
+    agrementParticulier: "Agrément travaux de développement informatique",
     
-    // Contacts Supplémentaires
-    referentComptable: "Marie Bernard",
-    emailComptable: "marie.bernard@expert-comptable.fr",
-    telephoneComptable: "+33 6 98 76 54 32",
-    avocat: "Maître Durand",
-    emailAvocat: "contact@durand-avocat.fr",
-    telephoneAvocat: "+33 1 56 78 90 12",
-    contactUrgence: "Pierre Leclerc",
-    telephoneUrgence: "+33 6 11 22 33 44"
+    // DONNÉES COMMERCIALES
+    effectifTotal: "12",
+    zoneGeographique: "Île-de-France, Rhône-Alpes",
+    codificationSecteur: "Services informatiques et de conseil",
+    
+    // PROPRIÉTÉ INTELLECTUELLE
+    marquesDeposees: "TechSolutions® (INPI - 2015)",
+    brevets: "",
+    droitsAuteur: "Logiciels propriétaires deposés",
+    
+    // CONFORMITÉ ENVIRONNEMENTALE
+    numeroICPE: "",
+    classificationEnvironnementale: "Non classée",
+    conformiteRGPD: "Oui",
+    registreTraitementDonnees: "Mis à jour le 2024-01-20",
+    
+    // INFORMATIONS COMMERCIALES
+    delaiMoyenPaiement: "30 jours",
+    modalitesFacturation: "Électronique avec signature",
+    conditionsReglement: "Virement bancaire ou carte bancaire"
   });
 
   const [editedData, setEditedData] = useState<UserData>(userData);
-  
-  // État pour détection mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  // Charger les données de sessionStorage au montage
   useEffect(() => {
     const savedData = sessionStorage.getItem("userProfileData");
     if (savedData) {
@@ -238,7 +247,6 @@ const Profile = () => {
       setEditedData(parsedData);
     }
 
-    // Écouter les changements de taille d'écran
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
@@ -246,7 +254,6 @@ const Profile = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Gestion de l'édition du profil
   const handleEditProfile = () => {
     setEditedData(userData);
     setIsEditingProfile(true);
@@ -276,17 +283,7 @@ const Profile = () => {
     });
   };
 
-  const handleRepresentantChange = (field: keyof RepresentantLegal, value: string) => {
-    setEditedData({
-      ...editedData,
-      representantLegal: {
-        ...editedData.representantLegal,
-        [field]: value
-      }
-    });
-  };
-
-  const handleEtablissementChange = (index: number, field: keyof Etablissement, value: string) => {
+  const handleEtablissementChange = (index: number, field: string, value: string) => {
     const newEtablissements = [...editedData.etablissements];
     newEtablissements[index] = {
       ...newEtablissements[index],
@@ -320,6 +317,25 @@ const Profile = () => {
     });
   };
 
+  const addCertification = () => {
+    setEditedData({
+      ...editedData,
+      certifications: [...editedData.certifications, {
+        nom: "",
+        dateObtention: "",
+        dateExpiration: "",
+        numero: ""
+      }]
+    });
+  };
+
+  const removeCertification = (index: number) => {
+    setEditedData({
+      ...editedData,
+      certifications: editedData.certifications.filter((_, i) => i !== index)
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-accent">
       {/* Header */}
@@ -340,18 +356,14 @@ const Profile = () => {
         </div>
       </header>
 
-      <main className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-5xl mx-auto">
-        {/* En-tête Principal Entreprise */}
+      <main className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-6xl mx-auto">
+        {/* En-tête Principal */}
         <Card className="p-4 sm:p-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
           <div className="flex items-start justify-between mb-4 sm:mb-6">
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{userData.raisonSociale}</h2>
               <p className="text-sm text-muted-foreground mt-2">{userData.formeJuridique} • {userData.secteurActivite}</p>
-              {userData.siteWeb && (
-                <a href={`https://${userData.siteWeb}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline mt-2">
-                  🔗 {userData.siteWeb}
-                </a>
-              )}
+              <p className="text-xs text-muted-foreground mt-1">Créée le {userData.dateCreation}</p>
             </div>
             {!isEditingProfile && (
               <Button
@@ -395,7 +407,7 @@ const Profile = () => {
                 </div>
                 <div>
                   <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Forme Juridique</label>
-                  <select value={editedData.formeJuridique} onChange={(e) => handleInputChange("formeJuridique", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                  <select value={editedData.formeJuridique} onChange={(e) => handleInputChange("formeJuridique", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
                     <option value="SARL">SARL</option>
                     <option value="SAS">SAS</option>
                     <option value="EIRL">EIRL</option>
@@ -408,11 +420,11 @@ const Profile = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">SIRET</label>
-                  <Input value={editedData.siret} onChange={(e) => handleInputChange("siret", e.target.value)} className="text-sm" />
+                  <Input value={editedData.siret} onChange={(e) => handleInputChange("siret", e.target.value)} className="text-sm" placeholder="14 chiffres" />
                 </div>
                 <div>
                   <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">SIREN</label>
-                  <Input value={editedData.siren} onChange={(e) => handleInputChange("siren", e.target.value)} className="text-sm" />
+                  <Input value={editedData.siren} onChange={(e) => handleInputChange("siren", e.target.value)} className="text-sm" placeholder="9 chiffres" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -421,26 +433,62 @@ const Profile = () => {
                   <Input value={editedData.numeroTVA} onChange={(e) => handleInputChange("numeroTVA", e.target.value)} className="text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Secteur d'Activité</label>
-                  <Input value={editedData.secteurActivite} onChange={(e) => handleInputChange("secteurActivite", e.target.value)} className="text-sm" />
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Code APE</label>
+                  <Input value={editedData.codeAPE} onChange={(e) => handleInputChange("codeAPE", e.target.value)} className="text-sm" />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Secteur d'Activité</label>
+                  <Input value={editedData.secteurActivite} onChange={(e) => handleInputChange("secteurActivite", e.target.value)} className="text-sm" />
+                </div>
+                <div>
                   <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date de Création</label>
                   <Input type="date" value={editedData.dateCreation} onChange={(e) => handleInputChange("dateCreation", e.target.value)} className="text-sm" />
                 </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Capital Social (€)</label>
-                  <Input type="number" value={editedData.capitalSocial} onChange={(e) => handleInputChange("capitalSocial", e.target.value)} className="text-sm" />
-                </div>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Capital Social (€)</label>
+                <Input type="number" value={editedData.capitalSocial} onChange={(e) => handleInputChange("capitalSocial", e.target.value)} className="text-sm" />
               </div>
             </div>
           )}
         </Card>
 
         <div className="space-y-6">
-          {/* Sièges & Établissements */}
+          {/* IMMATRICULATION & DOCUMENTS LÉGAUX */}
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Immatriculation & Documents Légaux
+            </h3>
+
+            {!isEditingProfile ? (
+              <div className="space-y-2">
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Immatriculation RCS/RM</p><p className="text-foreground">{userData.numeroImmatriculationRCS}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Kbis</p><p className="text-foreground">{userData.numeroKbis} (Date: {userData.dateKbis})</p></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">N° Immatriculation RCS/RM</label>
+                  <Input value={editedData.numeroImmatriculationRCS} onChange={(e) => handleInputChange("numeroImmatriculationRCS", e.target.value)} className="text-sm" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">N° Kbis</label>
+                    <Input value={editedData.numeroKbis} onChange={(e) => handleInputChange("numeroKbis", e.target.value)} className="text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date Kbis</label>
+                    <Input type="date" value={editedData.dateKbis} onChange={(e) => handleInputChange("dateKbis", e.target.value)} className="text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* ADRESSES & ÉTABLISSEMENTS */}
           <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -495,6 +543,7 @@ const Profile = () => {
                         <select value={etab.type} onChange={(e) => handleEtablissementChange(index, "type", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
                           <option value="Siège">Siège</option>
                           <option value="Établissement secondaire">Établissement secondaire</option>
+                          <option value="Domiciliation">Domiciliation</option>
                         </select>
                       </div>
                     </div>
@@ -531,11 +580,11 @@ const Profile = () => {
             )}
           </Card>
 
-          {/* Contact Entreprise */}
+          {/* CONTACTS */}
           <Card className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <Phone className="w-5 h-5 text-primary" />
-              Contact Entreprise
+              Contacts Généraux
             </h3>
 
             {!isEditingProfile ? (
@@ -544,6 +593,7 @@ const Profile = () => {
                 <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Téléphone</p><p className="text-foreground">{userData.telephoneGeneral}</p></div>
                 {userData.telephoneSecondaire && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Téléphone Secondaire</p><p className="text-foreground">{userData.telephoneSecondaire}</p></div>}
                 {userData.siteWeb && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Site Web</p><p className="text-foreground">{userData.siteWeb}</p></div>}
+                {userData.reseauxSociaux && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Réseaux Sociaux</p><p className="text-foreground text-sm">{userData.reseauxSociaux}</p></div>}
               </div>
             ) : (
               <div className="space-y-3">
@@ -563,104 +613,20 @@ const Profile = () => {
                   <label className="text-xs font-medium text-muted-foreground mb-1 block">Site Web</label>
                   <Input value={editedData.siteWeb} onChange={(e) => handleInputChange("siteWeb", e.target.value)} className="text-sm" placeholder="www.example.fr" />
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Réseaux Sociaux</label>
+                  <Input value={editedData.reseauxSociaux} onChange={(e) => handleInputChange("reseauxSociaux", e.target.value)} className="text-sm" placeholder="LinkedIn, Twitter, etc." />
+                </div>
               </div>
             )}
           </Card>
 
-          {/* Représentant Légal */}
+          {/* DONNÉES BANCAIRES */}
           <Card className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Représentant Légal
+              <DollarSign className="w-5 h-5 text-primary" />
+              Données Bancaires
             </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-3 p-4 bg-secondary/20 rounded-lg border border-border">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Nom</p>
-                    <p className="font-medium text-foreground">{userData.representantLegal.civilite} {userData.representantLegal.prenom} {userData.representantLegal.nom}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Fonction</p>
-                    <p className="font-medium text-foreground">{userData.representantLegal.fonction}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Email</p>
-                    <p className="text-foreground text-sm">{userData.representantLegal.email}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Téléphone</p>
-                    <p className="text-foreground text-sm">{userData.representantLegal.telephone}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Document d'Identité</p>
-                  <p className="text-foreground text-sm">{userData.representantLegal.typeDocument} - {userData.representantLegal.numeroDocument} (Expiration: {userData.representantLegal.dateExpiration})</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Civilité</label>
-                    <select value={editedData.representantLegal.civilite} onChange={(e) => handleRepresentantChange("civilite", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                      <option value="M">M.</option>
-                      <option value="Mme">Mme</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Prénom</label>
-                    <Input value={editedData.representantLegal.prenom} onChange={(e) => handleRepresentantChange("prenom", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                    <Input value={editedData.representantLegal.nom} onChange={(e) => handleRepresentantChange("nom", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Fonction</label>
-                    <Input value={editedData.representantLegal.fonction} onChange={(e) => handleRepresentantChange("fonction", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
-                    <Input type="email" value={editedData.representantLegal.email} onChange={(e) => handleRepresentantChange("email", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                    <Input value={editedData.representantLegal.telephone} onChange={(e) => handleRepresentantChange("telephone", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Type de Document d'Identité</label>
-                  <select value={editedData.representantLegal.typeDocument} onChange={(e) => handleRepresentantChange("typeDocument", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                    <option value="Passeport">Passeport</option>
-                    <option value="Carte d'Identité">Carte d'Identité</option>
-                    <option value="Titre de Séjour">Titre de Séjour</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
-                    <Input value={editedData.representantLegal.numeroDocument} onChange={(e) => handleRepresentantChange("numeroDocument", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Date d'Expiration</label>
-                    <Input type="date" value={editedData.representantLegal.dateExpiration} onChange={(e) => handleRepresentantChange("dateExpiration", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* Informations Bancaires */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Informations Bancaires</h3>
 
             {!isEditingProfile ? (
               <div className="space-y-2">
@@ -693,11 +659,11 @@ const Profile = () => {
             )}
           </Card>
 
-          {/* Informations Fiscales */}
+          {/* FISCALITÉ */}
           <Card className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <FileText className="w-5 h-5 text-primary" />
-              Informations Fiscales
+              Fiscalité
             </h3>
 
             {!isEditingProfile ? (
@@ -705,8 +671,9 @@ const Profile = () => {
                 <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Numéro Fiscal</p><p className="text-foreground">{userData.numeroFiscal}</p></div>
                 <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Régime Fiscal</p><p className="text-foreground">{userData.regimeFiscal}</p></div>
                 <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Chiffre d'Affaires Annuel</p><p className="text-foreground">{userData.chiffreAffairesAnnuel}€</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Taux de TVA</p><p className="text-foreground">{userData.tauxTVA}%</p></div>
-                {userData.beneficeOuPerte && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Bénéfice/Perte</p><p className="text-foreground">{userData.beneficeOuPerte}€</p></div>}
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Bénéfice/Perte</p><p className="text-foreground">{userData.beneficeOuPerte}€</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Taux TVA</p><p className="text-foreground">{userData.tauxTVA}%</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Centre de Gestion Agréé</p><p className="text-foreground">{userData.centreGestionAgree}</p></div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -730,220 +697,341 @@ const Profile = () => {
                     <Input type="number" value={editedData.chiffreAffairesAnnuel} onChange={(e) => handleInputChange("chiffreAffairesAnnuel", e.target.value)} className="text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Taux de TVA (%)</label>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Bénéfice/Perte (€)</label>
+                    <Input type="number" value={editedData.beneficeOuPerte} onChange={(e) => handleInputChange("beneficeOuPerte", e.target.value)} className="text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Taux TVA (%)</label>
                     <Input type="number" value={editedData.tauxTVA} onChange={(e) => handleInputChange("tauxTVA", e.target.value)} className="text-sm" step="0.1" />
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Bénéfice/Perte (€)</label>
-                  <Input type="number" value={editedData.beneficeOuPerte} onChange={(e) => handleInputChange("beneficeOuPerte", e.target.value)} className="text-sm" />
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Centre de Gestion Agréé</label>
+                    <Input value={editedData.centreGestionAgree} onChange={(e) => handleInputChange("centreGestionAgree", e.target.value)} className="text-sm" />
+                  </div>
                 </div>
               </div>
             )}
           </Card>
 
-          {/* Assurances Professionnelles */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Assurances Professionnelles</h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-3">
-                <div className="p-4 bg-secondary/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="font-medium text-foreground mb-2">Responsabilité Civile Professionnelle</p>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Numéro:</span> {userData.rcProNumero}</p>
-                    <p><span className="text-muted-foreground">Assureur:</span> {userData.rcProAssureur}</p>
-                    <p><span className="text-muted-foreground">Expiration:</span> {userData.rcProDateExpiration}</p>
-                  </div>
-                </div>
-                <div className="p-4 bg-secondary/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="font-medium text-foreground mb-2">Assurance Locaux</p>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Numéro:</span> {userData.assuranceLocauxNumero}</p>
-                    <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceLocauxAssureur}</p>
-                    <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceLocauxDateExpiration}</p>
-                  </div>
-                </div>
-                {userData.autresAssurances && (
-                  <div className="p-4 bg-secondary/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="font-medium text-foreground mb-2">Autres Assurances</p>
-                    <p className="text-sm text-foreground">{userData.autresAssurances}</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-secondary/10">
-                  <h4 className="font-medium text-sm mb-3">RC Professionnelle</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
-                      <Input value={editedData.rcProNumero} onChange={(e) => handleInputChange("rcProNumero", e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Assureur</label>
-                        <Input value={editedData.rcProAssureur} onChange={(e) => handleInputChange("rcProAssureur", e.target.value)} className="text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Date d'Expiration</label>
-                        <Input type="date" value={editedData.rcProDateExpiration} onChange={(e) => handleInputChange("rcProDateExpiration", e.target.value)} className="text-sm" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg bg-secondary/10">
-                  <h4 className="font-medium text-sm mb-3">Assurance Locaux</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
-                      <Input value={editedData.assuranceLocauxNumero} onChange={(e) => handleInputChange("assuranceLocauxNumero", e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Assureur</label>
-                        <Input value={editedData.assuranceLocauxAssureur} onChange={(e) => handleInputChange("assuranceLocauxAssureur", e.target.value)} className="text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Date d'Expiration</label>
-                        <Input type="date" value={editedData.assuranceLocauxDateExpiration} onChange={(e) => handleInputChange("assuranceLocauxDateExpiration", e.target.value)} className="text-sm" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Autres Assurances</label>
-                  <Input value={editedData.autresAssurances} onChange={(e) => handleInputChange("autresAssurances", e.target.value)} className="text-sm" placeholder="Ex: Assurance Cyber, etc." />
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* Documents Importants */}
+          {/* ORGANISMES SOCIAUX */}
           <Card className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Documents Importants
+              <Users className="w-5 h-5 text-primary" />
+              Organismes Sociaux
             </h3>
 
             {!isEditingProfile ? (
               <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Attestation d'Immatriculation</p><p className="text-foreground">{userData.attestationImmatriculation}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Certification de Non-Radiation</p><p className="text-foreground">{userData.certificationNonRadiation}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Dates Statuts</p><p className="text-foreground">{userData.datesStatuts}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Affiliation URSSAF</p><p className="text-foreground">{userData.affiliationURSSAF}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Compte URSSAF</p><p className="text-foreground">{userData.numeroCompteURSSAF}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Caisse de Retraite</p><p className="text-foreground">{userData.caisseretraite}</p></div>
               </div>
             ) : (
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Attestation d'Immatriculation</label>
-                  <Input value={editedData.attestationImmatriculation} onChange={(e) => handleInputChange("attestationImmatriculation", e.target.value)} className="text-sm" />
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Affiliation URSSAF</label>
+                  <Input value={editedData.affiliationURSSAF} onChange={(e) => handleInputChange("affiliationURSSAF", e.target.value)} className="text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Certification de Non-Radiation</label>
-                  <Input value={editedData.certificationNonRadiation} onChange={(e) => handleInputChange("certificationNonRadiation", e.target.value)} className="text-sm" />
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">N° Compte URSSAF</label>
+                  <Input value={editedData.numeroCompteURSSAF} onChange={(e) => handleInputChange("numeroCompteURSSAF", e.target.value)} className="text-sm" />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Dates Statuts</label>
-                  <Input value={editedData.datesStatuts} onChange={(e) => handleInputChange("datesStatuts", e.target.value)} className="text-sm" />
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Caisse de Retraite</label>
+                  <Input value={editedData.caisseretraite} onChange={(e) => handleInputChange("caisseretraite", e.target.value)} className="text-sm" />
                 </div>
               </div>
             )}
           </Card>
 
-          {/* Contacts Supplémentaires */}
+          {/* ASSURANCES PROFESSIONNELLES */}
           <Card className="p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Contacts Supplémentaires
+              <Shield className="w-5 h-5 text-primary" />
+              Assurances Professionnelles
             </h3>
 
             {!isEditingProfile ? (
               <div className="space-y-3">
-                {userData.referentComptable && (
-                  <div className="p-4 bg-secondary/20 rounded-lg border border-border">
-                    <p className="font-medium text-foreground mb-2">Expert-Comptable</p>
+                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="font-medium text-foreground mb-2">Responsabilité Civile Professionnelle</p>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">N°:</span> {userData.rcProNumero}</p>
+                    <p><span className="text-muted-foreground">Assureur:</span> {userData.rcProAssureur}</p>
+                    <p><span className="text-muted-foreground">Expiration:</span> {userData.rcProDateExpiration}</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="font-medium text-foreground mb-2">Assurance Locaux</p>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="text-muted-foreground">N°:</span> {userData.assuranceLocauxNumero}</p>
+                    <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceLocauxAssureur}</p>
+                    <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceLocauxDateExpiration}</p>
+                  </div>
+                </div>
+                {userData.assuranceAutoNumero && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="font-medium text-foreground mb-2">Assurance Automobile</p>
                     <div className="space-y-1 text-sm">
-                      <p className="text-foreground">{userData.referentComptable}</p>
-                      <p className="text-muted-foreground">📧 {userData.emailComptable}</p>
-                      <p className="text-muted-foreground">📞 {userData.telephoneComptable}</p>
+                      <p><span className="text-muted-foreground">N°:</span> {userData.assuranceAutoNumero}</p>
+                      <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceAutoAssureur}</p>
+                      <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceAutoDateExpiration}</p>
                     </div>
                   </div>
                 )}
-                {userData.avocat && (
-                  <div className="p-4 bg-secondary/20 rounded-lg border border-border">
-                    <p className="font-medium text-foreground mb-2">Avocat Conseil</p>
+                {userData.assuranceCyberNumero && (
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="font-medium text-foreground mb-2">Assurance Cyber</p>
                     <div className="space-y-1 text-sm">
-                      <p className="text-foreground">{userData.avocat}</p>
-                      <p className="text-muted-foreground">📧 {userData.emailAvocat}</p>
-                      <p className="text-muted-foreground">📞 {userData.telephoneAvocat}</p>
-                    </div>
-                  </div>
-                )}
-                {userData.contactUrgence && (
-                  <div className="p-4 bg-secondary/20 rounded-lg border border-red-200 dark:border-red-800">
-                    <p className="font-medium text-foreground mb-2">Contact d'Urgence</p>
-                    <div className="space-y-1 text-sm">
-                      <p className="text-foreground">{userData.contactUrgence}</p>
-                      <p className="text-muted-foreground">📞 {userData.telephoneUrgence}</p>
+                      <p><span className="text-muted-foreground">N°:</span> {userData.assuranceCyberNumero}</p>
+                      <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceCyberAssureur}</p>
+                      <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceCyberDateExpiration}</p>
                     </div>
                   </div>
                 )}
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-secondary/10">
-                  <h4 className="font-medium text-sm mb-3">Expert-Comptable</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                      <Input value={editedData.referentComptable} onChange={(e) => handleInputChange("referentComptable", e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { key: "rcPro", label: "RC Professionnelle", num: "rcProNumero", ass: "rcProAssureur", exp: "rcProDateExpiration" },
+                  { key: "locaux", label: "Assurance Locaux", num: "assuranceLocauxNumero", ass: "assuranceLocauxAssureur", exp: "assuranceLocauxDateExpiration" },
+                  { key: "auto", label: "Assurance Automobile", num: "assuranceAutoNumero", ass: "assuranceAutoAssureur", exp: "assuranceAutoDateExpiration" },
+                  { key: "cyber", label: "Assurance Cyber", num: "assuranceCyberNumero", ass: "assuranceCyberAssureur", exp: "assuranceCyberDateExpiration" }
+                ].map((ins) => (
+                  <div key={ins.key} className="p-4 border rounded-lg bg-secondary/10">
+                    <h4 className="font-medium text-sm mb-3">{ins.label}</h4>
+                    <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
-                        <Input type="email" value={editedData.emailComptable} onChange={(e) => handleInputChange("emailComptable", e.target.value)} className="text-sm" />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
+                        <Input value={editedData[ins.num as keyof UserData] as string} onChange={(e) => handleInputChange(ins.num as keyof UserData, e.target.value)} className="text-sm" />
                       </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                        <Input value={editedData.telephoneComptable} onChange={(e) => handleInputChange("telephoneComptable", e.target.value)} className="text-sm" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg bg-secondary/10">
-                  <h4 className="font-medium text-sm mb-3">Avocat Conseil</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                      <Input value={editedData.avocat} onChange={(e) => handleInputChange("avocat", e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
-                        <Input type="email" value={editedData.emailAvocat} onChange={(e) => handleInputChange("emailAvocat", e.target.value)} className="text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                        <Input value={editedData.telephoneAvocat} onChange={(e) => handleInputChange("telephoneAvocat", e.target.value)} className="text-sm" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Assureur</label>
+                          <Input value={editedData[ins.ass as keyof UserData] as string} onChange={(e) => handleInputChange(ins.ass as keyof UserData, e.target.value)} className="text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Expiration</label>
+                          <Input type="date" value={editedData[ins.exp as keyof UserData] as string} onChange={(e) => handleInputChange(ins.exp as keyof UserData, e.target.value)} className="text-sm" />
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {/* CONFORMITÉ & CERTIFICATIONS */}
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Conformité & Certifications
+            </h3>
+
+            {!isEditingProfile ? (
+              <div className="space-y-3">
+                {userData.certifications.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Certifications</p>
+                    {userData.certifications.map((cert, index) => (
+                      <div key={index} className="p-3 bg-secondary/30 rounded mb-2">
+                        <p className="font-medium text-sm">{cert.nom}</p>
+                        <p className="text-xs text-muted-foreground">N°: {cert.numero}</p>
+                        <p className="text-xs text-muted-foreground">Valide jusqu'au {cert.dateExpiration}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {userData.agrementParticulier && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Agrément Particulier</p><p className="text-foreground">{userData.agrementParticulier}</p></div>}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-3">Certifications</p>
+                  {editedData.certifications.map((cert, index) => (
+                    <div key={index} className="p-4 border rounded-lg bg-secondary/10 mb-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-sm">Certification {index + 1}</h4>
+                        {editedData.certifications.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeCertification(index)}
+                            className="text-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
+                          <Input value={cert.nom} onChange={(e) => {
+                            const newCerts = [...editedData.certifications];
+                            newCerts[index].nom = e.target.value;
+                            handleInputChange("certifications", newCerts);
+                          }} className="text-sm" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
+                            <Input value={cert.numero} onChange={(e) => {
+                              const newCerts = [...editedData.certifications];
+                              newCerts[index].numero = e.target.value;
+                              handleInputChange("certifications", newCerts);
+                            }} className="text-sm" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Date Obtention</label>
+                            <Input type="date" value={cert.dateObtention} onChange={(e) => {
+                              const newCerts = [...editedData.certifications];
+                              newCerts[index].dateObtention = e.target.value;
+                              handleInputChange("certifications", newCerts);
+                            }} className="text-sm" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Date Expiration</label>
+                          <Input type="date" value={cert.dateExpiration} onChange={(e) => {
+                            const newCerts = [...editedData.certifications];
+                            newCerts[index].dateExpiration = e.target.value;
+                            handleInputChange("certifications", newCerts);
+                          }} className="text-sm" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <Button variant="outline" onClick={addCertification} className="w-full text-sm">
+                    + Ajouter une certification
+                  </Button>
                 </div>
 
-                <div className="p-4 border rounded-lg bg-secondary/10">
-                  <h4 className="font-medium text-sm mb-3">Contact d'Urgence</h4>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                      <Input value={editedData.contactUrgence} onChange={(e) => handleInputChange("contactUrgence", e.target.value)} className="text-sm" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                      <Input value={editedData.telephoneUrgence} onChange={(e) => handleInputChange("telephoneUrgence", e.target.value)} className="text-sm" />
-                    </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Agrément Particulier</label>
+                  <Input value={editedData.agrementParticulier} onChange={(e) => handleInputChange("agrementParticulier", e.target.value)} className="text-sm" placeholder="Ex: Agrément travaux, certification ISO, etc." />
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* DONNÉES COMMERCIALES */}
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-primary" />
+              Données Commerciales
+            </h3>
+
+            {!isEditingProfile ? (
+              <div className="space-y-2">
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Effectif Total</p><p className="text-foreground">{userData.effectifTotal} employés</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Zone Géographique de Couverture</p><p className="text-foreground">{userData.zoneGeographique}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Codification Secteur</p><p className="text-foreground">{userData.codificationSecteur}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Délai Moyen de Paiement</p><p className="text-foreground">{userData.delaiMoyenPaiement}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Modalités de Facturation</p><p className="text-foreground">{userData.modalitesFacturation}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Conditions de Règlement</p><p className="text-foreground">{userData.conditionsReglement}</p></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Effectif Total</label>
+                  <Input value={editedData.effectifTotal} onChange={(e) => handleInputChange("effectifTotal", e.target.value)} className="text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Zone Géographique de Couverture</label>
+                  <Input value={editedData.zoneGeographique} onChange={(e) => handleInputChange("zoneGeographique", e.target.value)} className="text-sm" placeholder="Ex: Île-de-France, Rhône-Alpes, etc." />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Codification Secteur</label>
+                  <Input value={editedData.codificationSecteur} onChange={(e) => handleInputChange("codificationSecteur", e.target.value)} className="text-sm" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Délai Moyen de Paiement</label>
+                    <Input value={editedData.delaiMoyenPaiement} onChange={(e) => handleInputChange("delaiMoyenPaiement", e.target.value)} className="text-sm" placeholder="Ex: 30 jours" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Modalités de Facturation</label>
+                    <Input value={editedData.modalitesFacturation} onChange={(e) => handleInputChange("modalitesFacturation", e.target.value)} className="text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Conditions de Règlement</label>
+                  <Input value={editedData.conditionsReglement} onChange={(e) => handleInputChange("conditionsReglement", e.target.value)} className="text-sm" placeholder="Ex: Virement, carte bancaire, etc." />
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* PROPRIÉTÉ INTELLECTUELLE */}
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Propriété Intellectuelle
+            </h3>
+
+            {!isEditingProfile ? (
+              <div className="space-y-2">
+                {userData.marquesDeposees && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Marques Déposées</p><p className="text-foreground">{userData.marquesDeposees}</p></div>}
+                {userData.brevets && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Brevets</p><p className="text-foreground">{userData.brevets}</p></div>}
+                {userData.droitsAuteur && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Droits d'Auteur</p><p className="text-foreground">{userData.droitsAuteur}</p></div>}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Marques Déposées</label>
+                  <Input value={editedData.marquesDeposees} onChange={(e) => handleInputChange("marquesDeposees", e.target.value)} className="text-sm" placeholder="Ex: Marque® (INPI - 2020)" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Brevets</label>
+                  <Input value={editedData.brevets} onChange={(e) => handleInputChange("brevets", e.target.value)} className="text-sm" placeholder="Numéros de brevets, if any" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Droits d'Auteur</label>
+                  <Input value={editedData.droitsAuteur} onChange={(e) => handleInputChange("droitsAuteur", e.target.value)} className="text-sm" />
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* CONFORMITÉ ENVIRONNEMENTALE & LÉGALE */}
+          <Card className="p-4 sm:p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-600" />
+              Conformité Environnementale & Légale
+            </h3>
+
+            {!isEditingProfile ? (
+              <div className="space-y-2">
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Numéro ICPE</p><p className="text-foreground">{userData.numeroICPE || "Non applicable"}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Classification Environnementale</p><p className="text-foreground">{userData.classificationEnvironnementale}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Conformité RGPD</p><p className="text-foreground">{userData.conformiteRGPD}</p></div>
+                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Registre de Traitement des Données</p><p className="text-foreground">{userData.registreTraitementDonnees}</p></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro ICPE</label>
+                  <Input value={editedData.numeroICPE} onChange={(e) => handleInputChange("numeroICPE", e.target.value)} className="text-sm" placeholder="Si établissement classé" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Classification Environnementale</label>
+                  <Input value={editedData.classificationEnvironnementale} onChange={(e) => handleInputChange("classificationEnvironnementale", e.target.value)} className="text-sm" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Conformité RGPD</label>
+                    <select value={editedData.conformiteRGPD} onChange={(e) => handleInputChange("conformiteRGPD", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
+                      <option value="Oui">Oui</option>
+                      <option value="Non">Non</option>
+                      <option value="En cours">En cours</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Registre de Traitement des Données</label>
+                    <Input value={editedData.registreTraitementDonnees} onChange={(e) => handleInputChange("registreTraitementDonnees", e.target.value)} className="text-sm" placeholder="Date de dernière mise à jour" />
                   </div>
                 </div>
               </div>
