@@ -19,12 +19,6 @@ import DocumentsPage from "./Documents.tsx";
 import Profile from "./Profile.tsx";
 import SettingsPage from "./Settings.tsx"; 
 
-// --- DÉFINITIONS STATIQUES ---
-const CATEGORIES = [
-  { name: "Documents archivés", icon: Archive, url: "Documents archivés" },
-  { name: "Documents supportés", icon: LifeBuoy, url: "Documents supportés" },
-];
-
 // --- INTERFACE MISE À JOUR POUR CORRESPONDRE À LA DB SQLITE ---
 interface Document {
   id: number; // L'ID de la DB est un nombre
@@ -34,6 +28,13 @@ interface Document {
   date_ajout: string; // La date au format chaîne (ex: "2025-11-27 10:30:00")
   is_signed?: boolean | number; // Peut être true/false ou 0/1 de SQLite
   is_filled?: boolean | number; // Peut être true/false ou 0/1 de SQLite
+}
+
+// Interface pour les catégories
+interface Category {
+  name: string;
+  icon: any;
+  url: string;
 }
 
 // CORRECTION CRITIQUE : Utilisation stricte de localhost pour éviter les blocages inter-IP
@@ -432,8 +433,36 @@ const Dashboard = () => {
   const [viewingDocument, setViewingDocument] = useState<{ fileName: string; fileUrl: string; documentId: number } | null>(null);
 
   // L'état qui force le rafraîchissement global après un upload/suppression
-  const [globalRefreshKey, setGlobalRefreshKey] = useState(0); 
+  const [globalRefreshKey, setGlobalRefreshKey] = useState(0);
   
+  // État pour les catégories chargées dynamiquement
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Charger les catégories au montage du composant
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        if (response.ok) {
+          const data = await response.json();
+          // Construire les catégories avec les icônes
+          const categoriesWithIcons = data.map((catName: string) => ({
+            name: catName,
+            icon: catName === "Documents archivés" ? Archive : LifeBuoy,
+            url: catName
+          }));
+          setCategories(categoriesWithIcons);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
   // Fonction de rappel pour l'upload (incrémente la clé)
   const handleDocumentUploaded = () => {
       setGlobalRefreshKey(prevKey => prevKey + 1); 
@@ -464,7 +493,7 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  const isDocumentCategory = CATEGORIES.some(cat => cat.url === currentView);
+  const isDocumentCategory = categories.some(cat => cat.url === currentView);
 
   const currentCategoryName = isDocumentCategory ? currentView : '';
 

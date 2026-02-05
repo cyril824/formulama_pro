@@ -8,7 +8,7 @@ import base64
 import ssl
 
 # Importe toutes les fonctions nécessaires
-from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli 
+from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli, recuperer_toutes_categories 
 
 # 1. Configuration de l'application Flask
 app = Flask(__name__)
@@ -103,6 +103,26 @@ def api_ajouter_document():
         import traceback
         traceback.print_exc()
         return jsonify({"error": f"Erreur lors de l'insertion en BDD: {str(e)}"}), 500
+
+# ============================================
+# ENDPOINTS POUR LES CATÉGORIES
+# ============================================
+
+# Endpoint pour récupérer toutes les catégories
+@app.route('/api/categories', methods=['GET'])
+def api_recuperer_categories():
+    try:
+        categories = recuperer_toutes_categories()
+        # Retourner juste les noms des catégories pour le dropdown
+        category_names = [cat['nom'] for cat in categories]
+        return jsonify(category_names), 200
+    except Exception as e:
+        print(f"Erreur lors de la récupération des catégories: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+# ============================================
+# ENDPOINTS POUR LES DOCUMENTS
+# ============================================
 
 # 4. Endpoint pour récupérer les documents par catégorie (Méthode GET)
 @app.route('/api/documents/<categorie>', methods=['GET'])

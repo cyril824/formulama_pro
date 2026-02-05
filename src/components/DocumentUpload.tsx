@@ -2,12 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Upload } from 'lucide-react';
 import { useDocumentContext } from '@/context/DocumentContext';
 
-// Définitions des catégories disponibles (doivent correspondre aux noms dans la BDD)
-const CATEGORIES = [
-    "Documents archivés",
-    "Documents supportés",
-];
-
 // Le composant attend la fonction de rappel pour rafraîchir le dashboard après succès
 interface DocumentUploadProps {
     onUploadSuccess: () => void;
@@ -20,8 +14,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onUploadSuccess }) => {
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [messageVisible, setMessageVisible] = useState<boolean>(true);
     
-    // État pour gérer la catégorie choisie par l'utilisateur
-    const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
+    // État pour gérer les catégories chargées depuis l'API
+    const [categories, setCategories] = useState<string[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [loadingCategories, setLoadingCategories] = useState<boolean>(true);
     
     // Hook pour notifier les changements de documents
     const { notifyDocumentChange } = useDocumentContext(); 
@@ -29,7 +25,29 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onUploadSuccess }) => {
     // Définition de l'URL du serveur API — utilise le port 5001 pour Flask
     const API_BASE_URL = '';
 
-    // Efface le message automatiquement après 4 secondes pour les messages de succès
+    // Charger les catégories au montage du composant
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/categories`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setCategories(data);
+                    if (data.length > 0) {
+                        setSelectedCategory(data[0]);
+                    }
+                } else {
+                    console.error('Erreur lors de la récupération des catégories');
+                }
+            } catch (error) {
+                console.error('Erreur de connexion pour récupérer les catégories:', error);
+            } finally {
+                setLoadingCategories(false);
+            }
+        };
+
+        loadCategories();
+    }, [API_BASE_URL]);
     useEffect(() => {
         if (uploadMessage.startsWith('✅')) {
             const timer = setTimeout(() => {
@@ -141,11 +159,18 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ onUploadSuccess }) => {
                         <select 
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-gray-800 dark:text-white border border-indigo-300 dark:border-blue-400/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-blue-400 transition-all"
+                            disabled={loadingCategories}
+                            className="px-3 py-2 rounded-md bg-white dark:bg-slate-700 text-gray-800 dark:text-white border border-indigo-300 dark:border-blue-400/50 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-blue-400 transition-all disabled:opacity-50"
                         >
-                            {CATEGORIES.map((cat) => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
+                            {loadingCategories ? (
+                                <option>Chargement...</option>
+                            ) : categories.length > 0 ? (
+                                categories.map((cat) => (
+                                    <option key={cat} value={cat}>{cat}</option>
+                                ))
+                            ) : (
+                                <option>Aucune catégorie disponible</option>
+                            )}
                         </select>
                     </div>
 

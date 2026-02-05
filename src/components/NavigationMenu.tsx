@@ -1,17 +1,44 @@
-import { Archive, FileCheck, HelpCircle, Home, LogOut } from "lucide-react";
+import { Archive, FileCheck, HelpCircle, Home, LogOut, LifeBuoy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getBaseUrl } from "@/lib/urlHelper";
 
 const NavigationMenu = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 5, archives: 2, supportes: 3 });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // Charger les catégories au montage
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetch(`/api/categories`);
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des catégories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  // Construire les éléments du menu dynamiquement
+  const categoryMenuItems = categories.map((cat) => ({
+    icon: cat === "Documents archivés" ? Archive : LifeBuoy,
+    label: cat,
+    path: `/dashboard?view=${encodeURIComponent(cat)}`
+  }));
 
   const menuItems = [
     { icon: Home, label: "Accueil", path: "/dashboard" },
-    { icon: FileCheck, label: "Documents supportés", path: "/dashboard?view=Documents supportés" },
-    { icon: Archive, label: "Documents archivés", path: "/dashboard?view=Documents archivés" },
+    ...categoryMenuItems
   ];
 
   return (

@@ -33,7 +33,7 @@ def supprimer_document(doc_id: int):
             conn.close()
 
 def initialiser_base_de_donnees():
-    """Crée le fichier DB et la table 'documents' s'ils n'existent pas."""
+    """Crée le fichier DB et les tables 'documents' et 'categories' s'ils n'existent pas."""
     conn = None
     try:
         # Assurez-vous que le répertoire 'data' existe
@@ -42,6 +42,20 @@ def initialiser_base_de_donnees():
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         
+        # Créer la table 'categories'
+        creation_categories_query = """
+        CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom TEXT NOT NULL UNIQUE,
+            description TEXT,
+            date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        """
+        cursor.execute(creation_categories_query)
+        conn.commit()
+        print("[OK] Table 'categories' créée ou vérifiée.")
+        
+        # Créer la table 'documents'
         creation_table_query = """
         CREATE TABLE IF NOT EXISTS documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,6 +83,25 @@ def initialiser_base_de_donnees():
             cursor.execute("ALTER TABLE documents ADD COLUMN is_filled BOOLEAN DEFAULT 0")
             conn.commit()
             print("[OK] Colonne 'is_filled' ajoutée à la table 'documents'.")
+        
+        # Initialiser les catégories par défaut si la table est vide
+        cursor.execute("SELECT COUNT(*) FROM categories")
+        if cursor.fetchone()[0] == 0:
+            default_categories = [
+                ("Documents archivés", "Documents archivés"),
+                ("Documents supportés", "Documents supportés"),
+            ]
+            for nom, description in default_categories:
+                try:
+                    cursor.execute(
+                        "INSERT INTO categories (nom, description) VALUES (?, ?)",
+                        (nom, description)
+                    )
+                except sqlite3.IntegrityError:
+                    # La catégorie existe déjà, passer à la suivante
+                    pass
+            conn.commit()
+            print("[OK] Catégories par défaut initialisées.")
         
         print(f"[OK] Base de données '{DB_NAME}' initialisée avec succès.")
 
@@ -306,3 +339,31 @@ def diagnostiquer_fichiers_locaux(data_folder_path):
             "fichiers_locaux": [],
             "statut": f"ERREUR INCONNUE: {str(e)}"
         }
+
+
+def recuperer_toutes_categories():
+    """Récupère toutes les catégories disponibles."""
+    conn = None
+    categories = []
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        select_query = """
+        SELECT id, nom, description
+        FROM categories
+        ORDER BY nom ASC
+        """
+        
+        cursor.execute(select_query)
+        categories = [dict(row) for row in cursor.fetchall()]
+
+    except sqlite3.Error as e:
+        print(f"🛑 Erreur lors de la récupération des catégories : {e}")
+        
+    finally:
+        if conn:
+            conn.close()
+            
+    return categories
