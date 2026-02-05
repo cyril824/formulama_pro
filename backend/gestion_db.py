@@ -160,6 +160,7 @@ def recuperer_documents_par_categorie(categorie):
     documents = []
     try:
         conn = sqlite3.connect(DB_NAME)
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
         select_query = """
@@ -171,7 +172,7 @@ def recuperer_documents_par_categorie(categorie):
         
         # Utilise la catégorie pour filtrer
         cursor.execute(select_query, (categorie,))
-        documents = cursor.fetchall()
+        documents = [dict(row) for row in cursor.fetchall()]
 
     except sqlite3.Error as e:
         print(f"🛑 Erreur lors de la récupération pour la catégorie '{categorie}' : {e}")

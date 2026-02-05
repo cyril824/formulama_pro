@@ -203,16 +203,31 @@ const DocumentsPage: React.FC<DocumentsPageProps> = ({ currentCategory, refreshK
 
                 const data: any[] = await response.json();
 
-                // Mappage des tuples Python en objets TypeScript
-                const documentsMapped: DocumentItem[] = data.map(item => ({
-                    id: item[0],
-                    nom_fichier: item[1],
-                    chemin_local: item[2],
-                    categorie: item[3],
-                    date_ajout: item[4],
-                    is_signed: item[5], // is_signed peut être 0 ou 1
-                    is_filled: item[6] // is_filled peut être 0 ou 1
-                }));
+                // Mappage des données (supporte tuples et dictionnaires)
+                const documentsMapped: DocumentItem[] = data.map(item => {
+                    // Si c'est un tuple (array)
+                    if (Array.isArray(item)) {
+                        return {
+                            id: item[0],
+                            nom_fichier: item[1],
+                            chemin_local: item[2],
+                            categorie: item[3],
+                            date_ajout: item[4],
+                            is_signed: item[5],
+                            is_filled: item[6]
+                        };
+                    }
+                    // Si c'est un dictionnaire (objet)
+                    return {
+                        id: item.id,
+                        nom_fichier: item.nom_fichier,
+                        chemin_local: item.chemin_local,
+                        categorie: item.categorie,
+                        date_ajout: item.date_ajout,
+                        is_signed: item.is_signed,
+                        is_filled: item.is_filled
+                    };
+                });
 
                 setDocuments(documentsMapped);
                 setError(null);
