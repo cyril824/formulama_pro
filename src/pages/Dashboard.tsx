@@ -265,7 +265,7 @@ const HomeContent = ({ refreshKey, onDocumentClick }: { refreshKey: number, onDo
                         {/* Badge Rempli/À remplir */}
                         <Badge
                           variant={isFilled(doc) ? "default" : "secondary"}
-                          className={`flex items-center gap-1 transition-all duration-300 flex-shrink-0 text-xs h-fit w-fit ${
+                          className={`flex items-center gap-1 transition-all duration-300 flex-shrink-0 text-xs h-fit w-fit text-white ${
                             isFilled(doc)
                               ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600/80 dark:hover:bg-blue-600"
                               : "bg-gray-400 hover:bg-gray-500 dark:bg-gray-600/60 dark:hover:bg-gray-600/70"
@@ -287,7 +287,7 @@ const HomeContent = ({ refreshKey, onDocumentClick }: { refreshKey: number, onDo
                         {/* Badge Signé/Non signé */}
                         <Badge
                           variant={isSigned(doc) ? "default" : "destructive"}
-                          className={`flex items-center gap-1 transition-all duration-300 flex-shrink-0 text-xs h-fit w-fit ${
+                          className={`flex items-center gap-1 transition-all duration-300 flex-shrink-0 text-xs h-fit w-fit text-white ${
                             isSigned(doc)
                               ? "bg-success hover:bg-success/90 dark:bg-emerald-600/80 dark:hover:bg-emerald-600"
                               : "bg-destructive hover:bg-destructive/90 dark:bg-red-600/60 dark:hover:bg-red-600/70"
