@@ -2,6 +2,7 @@ import { Archive, FileCheck, HelpCircle, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { useState } from "react";
+import { getBaseUrl } from "@/lib/urlHelper";
 
 const NavigationMenu = () => {
   const navigate = useNavigate();
@@ -62,7 +63,7 @@ const NavigationMenu = () => {
         </button>
 
         <button
-          onClick={() => window.location.href = 'http://localhost:8000'}
+          onClick={() => window.location.href = getBaseUrl()}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 hover:bg-red-500/10 hover:text-red-600 group"
         >
           <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-red-600 transition-colors" />

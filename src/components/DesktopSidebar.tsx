@@ -2,6 +2,7 @@ import { Archive, FileCheck, HelpCircle, Home, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { getBaseUrl } from "@/lib/urlHelper";
 
 const DesktopSidebar = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const DesktopSidebar = () => {
             <span className="font-medium">Aide</span>
           </button>
           <button
-            onClick={() => window.location.href = 'http://localhost:8000'}
+            onClick={() => window.location.href = getBaseUrl()}
             className="w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-destructive hover:bg-destructive/10"
           >
             <LogOut className="w-4 h-4 flex-shrink-0" />

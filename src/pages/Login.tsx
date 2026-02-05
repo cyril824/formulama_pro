@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
 import formulamaLogo from "@/assets/formulama_logo.png";
+import { getBaseUrl } from "@/lib/urlHelper";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const Login = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => window.location.href = 'http://localhost:8000'}
+          onClick={() => window.location.href = getBaseUrl()}
           className="gap-1 sm:gap-2 text-primary/80 hover:text-primary hover:bg-primary/5 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-2 h-auto transition-colors duration-200"
         >
           <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
