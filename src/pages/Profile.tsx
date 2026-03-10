@@ -1,244 +1,340 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit2, Save, X, ChevronDown, Building2, FileText, MapPin, Phone, DollarSign, Shield, Users, Globe, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useDocumentContext } from "@/context/DocumentContext";
 
-// Interface pour les établissements
-interface Etablissement {
-  nom: string;
-  adresse: string;
-  codePostal: string;
-  ville: string;
-  telephone: string;
-  email: string;
-  type: string;
-}
-
-// Interface pour les certifications
-interface Certification {
-  nom: string;
-  dateObtention: string;
-  dateExpiration: string;
-  numero: string;
-}
-
-// Interface pour les données entreprise
+// Interface pour les donnÃ©es utilisateur
 interface UserData {
-  // ==== IDENTIFICATION ENTREPRISE ====
-  raisonSociale: string;
-  siret: string;
-  siren: string;
-  numeroTVA: string;
-  codeAPE: string;
-  secteurActivite: string;
-  formeJuridique: string;
-  dateCreation: string;
-  capitalSocial: string;
+  // Informations civiles
+  civilite: string;
+  nom: string;
+  nomUsage: string;
+  nomNaissance: string;
+  prenom: string;
+  dateNaissance: string;
+  communeNaissance: string;
+  codePostalNaissance: string;
+  paysNaissance: string;
+  nationalite: string;
+  situation: string;
+  nombreEnfants: string;
   
-  // ==== IMMATRICULATION & DOCUMENTS LÉGAUX ====
-  numeroImmatriculationRCS: string;
-  numeroKbis: string;
-  dateKbis: string;
-  numeroImmatriculationRM: string;
+  // PiÃ¨ce d'identitÃ©
+  typeDocument: string;
+  numeroDocument: string;
+  dateExpiration: string;
+  numeroSecuriteSociale: string;
   
-  // ==== ADRESSES & ÉTABLISSEMENTS ====
-  etablissements: Etablissement[];
-  
-  // ==== CONTACTS GÉNÉRAUX ====
-  emailGeneral: string;
-  telephoneGeneral: string;
+  // CoordonnÃ©es
+  email: string;
+  telephone: string;
   telephoneSecondaire: string;
-  siteWeb: string;
-  reseauxSociaux: string;
   
-  // ==== DONNÉES BANCAIRES ====
+  // Adresse
+  numeroAdresse: string;
+  typeVoieAdresse: string;
+  nomVoieAdresse: string;
+  codePostal: string;
+  commune: string;
+  pays: string;
+  
+  // Adresse secondaire (domicile ou travail)
+  numeroAdresseSecondaire: string;
+  typeVoieAdresseSecondaire: string;
+  nomVoieAdresseSecondaire: string;
+  codePostalSecondaire: string;
+  communeSecondaire: string;
+  
+  // Permis de conduire
+  typePermis: string;
+  numeroPermis: string;
+  dateValiditePermis: string;
+  
+  // VÃ©hicules (tableau pour plusieurs vÃ©hicules)
+  vehicules: Array<{
+    marque: string;
+    modele: string;
+    immatriculation: string;
+    chevaux: string;
+    annee: string;
+    carburant: string;
+  }>;
+  
+  // Professionnels
+  profession: string;
+  entreprise: string;
+  numeroSiret: string;
+  poste: string;
+  dateEmbauche: string;
+  salaire: string;
+  typeContrat: string;
+  
+  // CoordonnÃ©es professionnelles
+  adresseProfessionnelle: string;
+  telephoneProfessionnel: string;
+  emailProfessionnel: string;
+  
+  // Informations bancaires
   iban: string;
   bic: string;
   nomBanque: string;
-  titulaireDuCompte: string;
   
-  // ==== FISCALITÉ ====
+  // FiscalitÃ© (pour les entreprises)
   numeroFiscal: string;
-  regimeFiscal: string;
-  chiffreAffairesAnnuel: string;
-  beneficeOuPerte: string;
-  tauxTVA: string;
-  centreGestionAgree: string;
-  numeroCentreGestion: string;
+  numeroTVA: string;
+  revenuAnnuel: string;
   
-  // ==== ORGANISMES SOCIAUX ====
-  affiliationURSSAF: string;
-  numeroCompteURSSAF: string;
-  caisseretraite: string;
+  // Revenus fiscaux du foyer
+  revenuFiscalFoyer: string;
+  quotientFamilial: string;
   
-  // ==== ASSURANCES PROFESSIONNELLES ====
-  rcProNumero: string;
-  rcProAssureur: string;
-  rcProDateExpiration: string;
-  assuranceLocauxNumero: string;
-  assuranceLocauxAssureur: string;
-  assuranceLocauxDateExpiration: string;
-  assuranceAutoNumero: string;
-  assuranceAutoAssureur: string;
-  assuranceAutoDateExpiration: string;
-  assuranceCyberNumero: string;
-  assuranceCyberAssureur: string;
-  assuranceCyberDateExpiration: string;
+  // SantÃ©
+  numeroMutuelle: string;
+  mutuelle: string;
+  groupeSanguin: string;
+  allergies: string;
   
-  // ==== CONFORMITÉ & NORMES ====
-  certifications: Certification[];
-  agrementParticulier: string;
+  // Assurances
+  numeroAssuranceVehicule: string;
+  assuranceVehicule: string;
+  numeroAssuranceHabitation: string;
+  assuranceHabitation: string;
+  numeroAssuranceResponsabilite: string;
   
-  // ==== DONNÉES COMMERCIALES ====
-  effectifTotal: string;
-  zoneGeographique: string;
-  codificationSecteur: string;
+  // RQTH
+  rqthStatut: string; // "oui" ou "non"
+  rqthNumero: string;
+  rqthDateRenouvellement: string;
+  rqthOrganisme: string;
   
-  // ==== PROPRIÉTÉ INTELLECTUELLE ====
-  marquesDeposees: string;
-  brevets: string;
-  droitsAuteur: string;
+  // Ã‰ducation
+  diplomeNiveau: string;
+  diplomeSpecialite: string;
+  etablissementEtudes: string;
+  dateObtention: string;
   
-  // ==== CONFORMITÉ ENVIRONNEMENTALE & LÉGALE ====
-  numeroICPE: string;
-  classificationEnvironnementale: string;
-  conformiteRGPD: string;
-  registreTraitementDonnees: string;
-  
-  // ==== INFORMATIONS COMMERCIALES ====
-  delaiMoyenPaiement: string;
-  modalitesFacturation: string;
-  conditionsReglement: string;
+  // Contact d'urgence
+  nomUrgence: string;
+  telephoneUrgence: string;
+  relationUrgence: string;
 }
+
+// Types pour la visibilitÃ© des blocs
+type BlockKey = 'civiles' | 'identite' | 'coordonnees' | 'adresse' | 'adresseSecondaire' | 'permis' | 'vehicules' | 'professionnels' | 'coordProf' | 'bancaires' | 'fiscalite' | 'revenus' | 'sante' | 'assurances' | 'rqth' | 'education' | 'urgence';
+
+interface BlockVisibility {
+  [key: string]: boolean;
+}
+
+// Composant Section repliable pour mobile
+interface SectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  isEditing?: boolean;
+  blockKey?: BlockKey;
+  onRemove?: (blockKey: BlockKey) => void;
+}
+
+const CollapsibleSection = ({ title, children, defaultOpen = true, isEditing = false, blockKey, onRemove }: SectionProps) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border border-border rounded-lg overflow-hidden bg-card">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-secondary/50 transition-colors"
+      >
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center gap-2">
+          {isEditing && onRemove && blockKey && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove(blockKey);
+              }}
+              className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+          <ChevronDown
+            className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+      </button>
+      {isOpen && (
+        <div className="px-4 py-4 border-t border-border bg-card">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { documentChanged } = useDocumentContext();
 
-  // État des données entreprise
+  // Ã‰tat des donnÃ©es utilisateur avec valeurs par dÃ©faut
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [userData, setUserData] = useState<UserData>({
-    // IDENTIFICATION
-    raisonSociale: "TechSolutions SARL",
-    siret: "12345678901234",
-    siren: "123456789",
-    numeroTVA: "FR12345678901",
-    codeAPE: "6201Z",
-    secteurActivite: "Services Informatiques",
-    formeJuridique: "SARL",
-    dateCreation: "2015-06-20",
-    capitalSocial: "50000",
+    // Civiles
+    civilite: "M",
+    nom: "Dupont",
+    nomUsage: "Dupont",
+    nomNaissance: "Dupont",
+    prenom: "Jean",
+    dateNaissance: "1990-01-15",
+    communeNaissance: "Paris",
+    codePostalNaissance: "75000",
+    paysNaissance: "France",
+    nationalite: "FranÃ§aise",
+    situation: "MariÃ©(e)",
+    nombreEnfants: "2",
     
-    // IMMATRICULATION
-    numeroImmatriculationRCS: "123456789",
-    numeroKbis: "123456789001",
-    dateKbis: "2024-01-15",
-    numeroImmatriculationRM: "",
+    // IdentitÃ©
+    typeDocument: "Passeport",
+    numeroDocument: "AB123456",
+    dateExpiration: "2030-06-30",
+    numeroSecuriteSociale: "1 90 01 75 123 456 78",
     
-    // ÉTABLISSEMENTS
-    etablissements: [
+    // CoordonnÃ©es
+    email: "jean.dupont@example.com",
+    telephone: "+33 6 12 34 56 78",
+    telephoneSecondaire: "",
+    
+    // Adresse
+    numeroAdresse: "123",
+    typeVoieAdresse: "Rue",
+    nomVoieAdresse: "de la Paix",
+    codePostal: "75000",
+    commune: "Paris",
+    pays: "France",
+    
+    // Adresse secondaire
+    numeroAdresseSecondaire: "",
+    typeVoieAdresseSecondaire: "",
+    nomVoieAdresseSecondaire: "",
+    codePostalSecondaire: "",
+    communeSecondaire: "",
+    
+    // Permis
+    typePermis: "B",
+    numeroPermis: "123456789012",
+    dateValiditePermis: "2030-01-15",
+    
+    // VÃ©hicules
+    vehicules: [
       {
-        nom: "Siège Social",
-        adresse: "123 Avenue de la République",
-        codePostal: "75000",
-        ville: "Paris",
-        telephone: "+33 1 23 45 67 89",
-        email: "contact@techsolutions.fr",
-        type: "Siège"
-      },
-      {
-        nom: "Établissement Secondaire",
-        adresse: "456 Rue de la Paix",
-        codePostal: "69000",
-        ville: "Lyon",
-        telephone: "+33 4 78 90 12 34",
-        email: "lyon@techsolutions.fr",
-        type: "Établissement secondaire"
+        marque: "Peugeot",
+        modele: "308",
+        immatriculation: "AB-123-CD",
+        chevaux: "110",
+        annee: "2020",
+        carburant: "Essence"
       }
     ],
     
-    // CONTACTS
-    emailGeneral: "contact@techsolutions.fr",
-    telephoneGeneral: "+33 1 23 45 67 89",
-    telephoneSecondaire: "+33 1 98 76 54 32",
-    siteWeb: "www.techsolutions.fr",
-    reseauxSociaux: "LinkedIn: /techsolutions | Twitter: @techsol",
+    // Professionnels
+    profession: "IngÃ©nieur",
+    entreprise: "TechCorp",
+    numeroSiret: "12345678901234",
+    poste: "IngÃ©nieur Senior",
+    dateEmbauche: "2015-03-20",
+    salaire: "50000",
+    typeContrat: "CDI",
     
-    // DONNÉES BANCAIRES
+    // CoordonnÃ©es pro
+    adresseProfessionnelle: "456 Avenue de la Tech, 75008 Paris",
+    telephoneProfessionnel: "+33 1 23 45 67 89",
+    emailProfessionnel: "jean.dupont@techcorp.com",
+    
+    // Bancaires
     iban: "FR1420041010050500013M02606",
     bic: "BNAGFRPP",
     nomBanque: "BNP Paribas",
-    titulaireDuCompte: "TechSolutions SARL",
     
-    // FISCALITÉ
-    numeroFiscal: "12 345 678 901",
-    regimeFiscal: "Réel",
-    chiffreAffairesAnnuel: "250000",
-    beneficeOuPerte: "45000",
-    tauxTVA: "20",
-    centreGestionAgree: "CGA Nord Paris",
-    numeroCentreGestion: "75123456",
+    // FiscalitÃ©
+    numeroFiscal: "1 90 01 75 123 456",
+    numeroTVA: "FR12345678901",
+    revenuAnnuel: "50000",
     
-    // ORGANISMES SOCIAUX
-    affiliationURSSAF: "Île-de-France",
-    numeroCompteURSSAF: "751234567890",
-    caisseretraite: "CARSAT Île-de-France",
+    // Revenus fiscaux du foyer
+    revenuFiscalFoyer: "75000",
+    quotientFamilial: "2.5",
     
-    // ASSURANCES
-    rcProNumero: "RC2024001234",
-    rcProAssureur: "AXA Assurances",
-    rcProDateExpiration: "2025-12-31",
-    assuranceLocauxNumero: "LOC2024005678",
-    assuranceLocauxAssureur: "Allianz",
-    assuranceLocauxDateExpiration: "2025-12-31",
-    assuranceAutoNumero: "AUTO2024001234",
-    assuranceAutoAssureur: "MAAF",
-    assuranceAutoDateExpiration: "2025-06-30",
-    assuranceCyberNumero: "CYBER2024001234",
-    assuranceCyberAssureur: "XXL Assurances",
-    assuranceCyberDateExpiration: "2025-12-31",
+    // SantÃ©
+    numeroMutuelle: "12345678",
+    mutuelle: "Axa Assurances",
+    groupeSanguin: "O+",
+    allergies: "Aucune",
     
-    // CONFORMITÉ & NORMES
-    certifications: [
-      {
-        nom: "ISO 27001",
-        dateObtention: "2020-03-15",
-        dateExpiration: "2026-03-15",
-        numero: "CERT-ISO27001-2020"
-      }
-    ],
-    agrementParticulier: "Agrément travaux de développement informatique",
+    // Assurances
+    numeroAssuranceVehicule: "VE123456789",
+    assuranceVehicule: "MAAF",
+    numeroAssuranceHabitation: "HA123456789",
+    assuranceHabitation: "Allianz",
+    numeroAssuranceResponsabilite: "RC123456789",
     
-    // DONNÉES COMMERCIALES
-    effectifTotal: "12",
-    zoneGeographique: "Île-de-France, Rhône-Alpes",
-    codificationSecteur: "Services informatiques et de conseil",
+    // RQTH
+    rqthStatut: "non",
+    rqthNumero: "",
+    rqthDateRenouvellement: "",
+    rqthOrganisme: "",
     
-    // PROPRIÉTÉ INTELLECTUELLE
-    marquesDeposees: "TechSolutions® (INPI - 2015)",
-    brevets: "",
-    droitsAuteur: "Logiciels propriétaires deposés",
+    // Ã‰ducation
+    diplomeNiveau: "Master",
+    diplomeSpecialite: "Informatique",
+    etablissementEtudes: "UniversitÃ© Paris-Saclay",
+    dateObtention: "2012",
     
-    // CONFORMITÉ ENVIRONNEMENTALE
-    numeroICPE: "",
-    classificationEnvironnementale: "Non classée",
-    conformiteRGPD: "Oui",
-    registreTraitementDonnees: "Mis à jour le 2024-01-20",
+    // Contact urgence
+    nomUrgence: "Marie Dupont",
+    telephoneUrgence: "+33 6 98 76 54 32",
+    relationUrgence: "Ã‰pouse",
     
-    // INFORMATIONS COMMERCIALES
-    delaiMoyenPaiement: "30 jours",
-    modalitesFacturation: "Électronique avec signature",
-    conditionsReglement: "Virement bancaire ou carte bancaire"
   });
 
   const [editedData, setEditedData] = useState<UserData>(userData);
+  
+  // Ã‰tat pour la visibilitÃ© des blocs
+  const [visibleBlocks, setVisibleBlocks] = useState<BlockVisibility>({
+    civiles: true,
+    identite: true,
+    coordonnees: true,
+    adresse: true,
+    numeroAdresseSecondaire: true,
+    permis: true,
+    vehicules: true,
+    professionnels: true,
+    coordProf: true,
+    bancaires: true,
+    fiscalite: true,
+    revenus: true,
+    sante: true,
+    assurances: true,
+    rqth: true,
+    education: true,
+    urgence: true,
+  });
+
+  // Ã‰tat pour dÃ©tection mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
+  // API URL
+  const API_BASE_URL = '';
+
+  // Charger les donnÃ©es de sessionStorage au montage
   useEffect(() => {
     const savedData = sessionStorage.getItem("userProfileData");
     if (savedData) {
@@ -247,6 +343,7 @@ const Profile = () => {
       setEditedData(parsedData);
     }
 
+    // Ã‰couter les changements de taille d'Ã©cran
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
     };
@@ -254,6 +351,7 @@ const Profile = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Gestion de l'Ã©dition du profil
   const handleEditProfile = () => {
     setEditedData(userData);
     setIsEditingProfile(true);
@@ -261,12 +359,14 @@ const Profile = () => {
 
   const handleSaveProfile = () => {
     setUserData(editedData);
+    // Sauvegarder dans sessionStorage
     sessionStorage.setItem("userProfileData", JSON.stringify(editedData));
     setIsEditingProfile(false);
     
+    // Afficher un message de confirmation
     toast({
-      title: "Enregistrement réussi",
-      description: "Vos modifications ont été sauvegardées avec succès.",
+      title: "Enregistrement rÃ©ussi",
+      description: "Vos modifications ont Ã©tÃ© sauvegardÃ©es avec succÃ¨s.",
       className: "bg-green-500 text-white border-0 fixed top-4 left-1/2 -translate-x-1/2 rounded-lg shadow-lg max-w-xs px-4 py-2 text-sm animate-fade-in-out",
       duration: 3000,
     });
@@ -276,69 +376,24 @@ const Profile = () => {
     setIsEditingProfile(false);
   };
 
-  const handleInputChange = (field: keyof UserData, value: any) => {
+  const handleInputChange = (field: keyof UserData, value: string) => {
     setEditedData({
       ...editedData,
       [field]: value,
     });
   };
 
-  const handleEtablissementChange = (index: number, field: string, value: string) => {
-    const newEtablissements = [...editedData.etablissements];
-    newEtablissements[index] = {
-      ...newEtablissements[index],
-      [field]: value
-    };
-    setEditedData({
-      ...editedData,
-      etablissements: newEtablissements
-    });
-  };
-
-  const addEtablissement = () => {
-    setEditedData({
-      ...editedData,
-      etablissements: [...editedData.etablissements, {
-        nom: "",
-        adresse: "",
-        codePostal: "",
-        ville: "",
-        telephone: "",
-        email: "",
-        type: "Établissement secondaire"
-      }]
-    });
-  };
-
-  const removeEtablissement = (index: number) => {
-    setEditedData({
-      ...editedData,
-      etablissements: editedData.etablissements.filter((_, i) => i !== index)
-    });
-  };
-
-  const addCertification = () => {
-    setEditedData({
-      ...editedData,
-      certifications: [...editedData.certifications, {
-        nom: "",
-        dateObtention: "",
-        dateExpiration: "",
-        numero: ""
-      }]
-    });
-  };
-
-  const removeCertification = (index: number) => {
-    setEditedData({
-      ...editedData,
-      certifications: editedData.certifications.filter((_, i) => i !== index)
+  // Fonction pour basculer la visibilitÃ© d'un bloc
+  const toggleBlock = (blockKey: BlockKey) => {
+    setVisibleBlocks({
+      ...visibleBlocks,
+      [blockKey]: !visibleBlocks[blockKey]
     });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/30 to-accent">
-      {/* Header */}
+      {/* Header avec bouton retour */}
       <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40 shadow-[var(--shadow-soft)]">
         <div className="w-full px-3 sm:px-4 h-14 sm:h-16 flex items-center gap-3">
           <Button
@@ -349,708 +404,1484 @@ const Profile = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-primary" />
-            <h1 className="text-lg sm:text-xl font-bold text-foreground">Profil Entreprise</h1>
-          </div>
+          <h1 className="text-lg sm:text-xl font-bold text-foreground">Mon Profil</h1>
         </div>
       </header>
 
-      <main className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-6xl mx-auto">
-        {/* En-tête Principal */}
-        <Card className="p-4 sm:p-6 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-          <div className="flex items-start justify-between mb-4 sm:mb-6">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{userData.raisonSociale}</h2>
-              <p className="text-sm text-muted-foreground mt-2">{userData.formeJuridique} • {userData.secteurActivite}</p>
-              <p className="text-xs text-muted-foreground mt-1">Créée le {userData.dateCreation}</p>
-            </div>
-            {!isEditingProfile && (
-              <Button
-                onClick={handleEditProfile}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                Modifier
-              </Button>
-            )}
-          </div>
-
-          {!isEditingProfile ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 bg-secondary/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">SIRET</p>
-                <p className="font-medium text-sm text-foreground">{userData.siret}</p>
-              </div>
-              <div className="p-3 bg-secondary/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">SIREN</p>
-                <p className="font-medium text-sm text-foreground">{userData.siren}</p>
-              </div>
-              <div className="p-3 bg-secondary/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">TVA</p>
-                <p className="font-medium text-sm text-foreground">{userData.numeroTVA}</p>
-              </div>
-              <div className="p-3 bg-secondary/30 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Capital</p>
-                <p className="font-medium text-sm text-foreground">{userData.capitalSocial}€</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground border-b pb-2">Informations Générales</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Raison Sociale</label>
-                  <Input value={editedData.raisonSociale} onChange={(e) => handleInputChange("raisonSociale", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Forme Juridique</label>
-                  <select value={editedData.formeJuridique} onChange={(e) => handleInputChange("formeJuridique", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                    <option value="SARL">SARL</option>
-                    <option value="SAS">SAS</option>
-                    <option value="EIRL">EIRL</option>
-                    <option value="Auto-entrepreneur">Auto-entrepreneur</option>
-                    <option value="SASU">SASU</option>
-                    <option value="Micro-entreprise">Micro-entreprise</option>
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">SIRET</label>
-                  <Input value={editedData.siret} onChange={(e) => handleInputChange("siret", e.target.value)} className="text-sm" placeholder="14 chiffres" />
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">SIREN</label>
-                  <Input value={editedData.siren} onChange={(e) => handleInputChange("siren", e.target.value)} className="text-sm" placeholder="9 chiffres" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Numéro de TVA</label>
-                  <Input value={editedData.numeroTVA} onChange={(e) => handleInputChange("numeroTVA", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Code APE</label>
-                  <Input value={editedData.codeAPE} onChange={(e) => handleInputChange("codeAPE", e.target.value)} className="text-sm" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Secteur d'Activité</label>
-                  <Input value={editedData.secteurActivite} onChange={(e) => handleInputChange("secteurActivite", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date de Création</label>
-                  <Input type="date" value={editedData.dateCreation} onChange={(e) => handleInputChange("dateCreation", e.target.value)} className="text-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Capital Social (€)</label>
-                <Input type="number" value={editedData.capitalSocial} onChange={(e) => handleInputChange("capitalSocial", e.target.value)} className="text-sm" />
-              </div>
-            </div>
-          )}
-        </Card>
-
+      <main className="w-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6 max-w-4xl mx-auto">
         <div className="space-y-6">
-          {/* IMMATRICULATION & DOCUMENTS LÉGAUX */}
+          {/* Section Informations Personnelles */}
           <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Immatriculation & Documents Légaux
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Immatriculation RCS/RM</p><p className="text-foreground">{userData.numeroImmatriculationRCS}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Kbis</p><p className="text-foreground">{userData.numeroKbis} (Date: {userData.dateKbis})</p></div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">N° Immatriculation RCS/RM</label>
-                  <Input value={editedData.numeroImmatriculationRCS} onChange={(e) => handleInputChange("numeroImmatriculationRCS", e.target.value)} className="text-sm" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">N° Kbis</label>
-                    <Input value={editedData.numeroKbis} onChange={(e) => handleInputChange("numeroKbis", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date Kbis</label>
-                    <Input type="date" value={editedData.dateKbis} onChange={(e) => handleInputChange("dateKbis", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* ADRESSES & ÉTABLISSEMENTS */}
-          <Card className="p-4 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-primary" />
-                Sièges & Établissements
-              </h3>
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+                Informations Personnelles
+              </h2>
+              {!isEditingProfile && (
+                <Button
+                  onClick={handleEditProfile}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Modifier
+                </Button>
+              )}
             </div>
 
-            {!isEditingProfile ? (
-              <div className="space-y-3">
-                {userData.etablissements.map((etab, index) => (
-                  <div key={index} className="p-4 bg-secondary/30 rounded-lg border border-border">
-                    <div className="flex items-start justify-between mb-3">
+            {isEditingProfile ? (
+              <div className="space-y-4 sm:space-y-6">
+                {/* Section Informations Civiles */}
+                {visibleBlocks.civiles && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Informations Civiles</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('civiles')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
-                        <p className="font-semibold text-foreground">{etab.nom}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{etab.type}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">CivilitÃ©</label>
+                        <select value={editedData.civilite} onChange={(e) => handleInputChange("civilite", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                          <option value="M">M.</option>
+                          <option value="Mme">Mme</option>
+                          <option value="Mlle">Mlle</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">PrÃ©nom</label>
+                        <Input value={editedData.prenom} onChange={(e) => handleInputChange("prenom", e.target.value)} className="text-sm" />
                       </div>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <p className="text-foreground">{etab.adresse}</p>
-                      <p className="text-foreground">{etab.codePostal} {etab.ville}</p>
-                      <p className="text-primary">📞 {etab.telephone}</p>
-                      <p className="text-primary">📧 {etab.email}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom</label>
+                        <Input value={editedData.nom} onChange={(e) => handleInputChange("nom", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom d'usage</label>
+                        <Input value={editedData.nomUsage} onChange={(e) => handleInputChange("nomUsage", e.target.value)} className="text-sm" />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {editedData.etablissements.map((etab, index) => (
-                  <div key={index} className="p-4 border rounded-lg bg-secondary/10 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-sm">Établissement {index + 1}</h4>
-                      {editedData.etablissements.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeEtablissement(index)}
-                          className="text-red-600"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom de naissance</label>
+                        <Input value={editedData.nomNaissance} onChange={(e) => handleInputChange("nomNaissance", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date de naissance</label>
+                        <Input type="date" value={editedData.dateNaissance} onChange={(e) => handleInputChange("dateNaissance", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Ville et Code postal de naissance</label>
+                        <select 
+                          value={editedData.communeNaissance && editedData.codePostalNaissance ? `${editedData.communeNaissance}|${editedData.codePostalNaissance}` : ""} 
+                          onChange={(e) => {
+                            const selected = e.target.value;
+                            if (selected) {
+                              const [cityName, postalCode] = selected.split('|');
+                              setEditedData({
+                                ...editedData,
+                                communeNaissance: cityName,
+                                codePostalNaissance: postalCode
+                              });
+                            } else {
+                              setEditedData({
+                                ...editedData,
+                                communeNaissance: "",
+                                codePostalNaissance: ""
+                              });
+                            }
+                          }} 
+                          className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground"
                         >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                        <Input value={etab.nom} onChange={(e) => handleEtablissementChange(index, "nom", e.target.value)} className="text-sm" />
+                          <option value="">SÃ©lectionner une ville...</option>
+                          <option value="Paris|75000">Paris (75000)</option>
+                          <option value="Marseille|13000">Marseille (13000)</option>
+                          <option value="Lyon|69000">Lyon (69000)</option>
+                          <option value="Toulouse|31000">Toulouse (31000)</option>
+                          <option value="Nice|06000">Nice (06000)</option>
+                          <option value="Nantes|44000">Nantes (44000)</option>
+                          <option value="Strasbourg|67000">Strasbourg (67000)</option>
+                          <option value="Montpellier|34000">Montpellier (34000)</option>
+                          <option value="Bordeaux|33000">Bordeaux (33000)</option>
+                          <option value="Lille|59000">Lille (59000)</option>
+                          <option value="Rennes|35000">Rennes (35000)</option>
+                          <option value="Reims|51100">Reims (51100)</option>
+                          <option value="Le Havre|76600">Le Havre (76600)</option>
+                          <option value="Saint-Ã‰tienne|42000">Saint-Ã‰tienne (42000)</option>
+                          <option value="Toulon|83000">Toulon (83000)</option>
+                          <option value="Grenoble|38000">Grenoble (38000)</option>
+                          <option value="Angers|49000">Angers (49000)</option>
+                          <option value="Dijon|21000">Dijon (21000)</option>
+                          <option value="NÃ®mes|30000">NÃ®mes (30000)</option>
+                          <option value="Aix-en-Provence|13100">Aix-en-Provence (13100)</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Type</label>
-                        <select value={etab.type} onChange={(e) => handleEtablissementChange(index, "type", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                          <option value="Siège">Siège</option>
-                          <option value="Établissement secondaire">Établissement secondaire</option>
-                          <option value="Domiciliation">Domiciliation</option>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Ou saisir manuellement</label>
+                        <Input value={editedData.communeNaissance} onChange={(e) => handleInputChange("communeNaissance", e.target.value)} className="text-sm" placeholder="Lieu de naissance" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NationalitÃ©</label>
+                        <Input value={editedData.nationalite} onChange={(e) => handleInputChange("nationalite", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Situation familiale</label>
+                        <select value={editedData.situation} onChange={(e) => handleInputChange("situation", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                          <option value="CÃ©libataire">CÃ©libataire</option>
+                          <option value="MariÃ©(e)">MariÃ©(e)</option>
+                          <option value="PacsÃ©(e)">PacsÃ©(e)</option>
+                          <option value="DivorcÃ©(e)">DivorcÃ©(e)</option>
+                          <option value="Veuf(ve)">Veuf(ve)</option>
                         </select>
                       </div>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Adresse</label>
-                      <Input value={etab.adresse} onChange={(e) => handleEtablissementChange(index, "adresse", e.target.value)} className="text-sm" />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Code Postal</label>
-                        <Input value={etab.codePostal} onChange={(e) => handleEtablissementChange(index, "codePostal", e.target.value)} className="text-sm" />
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nombre d'enfants</label>
+                        <Input type="number" value={editedData.nombreEnfants} onChange={(e) => handleInputChange("nombreEnfants", e.target.value)} className="text-sm" />
                       </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Ville</label>
-                        <Input value={etab.ville} onChange={(e) => handleEtablissementChange(index, "ville", e.target.value)} className="text-sm" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                        <Input value={etab.telephone} onChange={(e) => handleEtablissementChange(index, "telephone", e.target.value)} className="text-sm" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Email</label>
-                        <Input type="email" value={etab.email} onChange={(e) => handleEtablissementChange(index, "email", e.target.value)} className="text-sm" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" onClick={addEtablissement} className="w-full text-sm">
-                  + Ajouter un établissement
-                </Button>
-              </div>
-            )}
-          </Card>
-
-          {/* CONTACTS */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Phone className="w-5 h-5 text-primary" />
-              Contacts Généraux
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Email Général</p><p className="text-foreground">{userData.emailGeneral}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Téléphone</p><p className="text-foreground">{userData.telephoneGeneral}</p></div>
-                {userData.telephoneSecondaire && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Téléphone Secondaire</p><p className="text-foreground">{userData.telephoneSecondaire}</p></div>}
-                {userData.siteWeb && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Site Web</p><p className="text-foreground">{userData.siteWeb}</p></div>}
-                {userData.reseauxSociaux && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Réseaux Sociaux</p><p className="text-foreground text-sm">{userData.reseauxSociaux}</p></div>}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Email Général</label>
-                  <Input type="email" value={editedData.emailGeneral} onChange={(e) => handleInputChange("emailGeneral", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone</label>
-                  <Input value={editedData.telephoneGeneral} onChange={(e) => handleInputChange("telephoneGeneral", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Téléphone Secondaire</label>
-                  <Input value={editedData.telephoneSecondaire} onChange={(e) => handleInputChange("telephoneSecondaire", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Site Web</label>
-                  <Input value={editedData.siteWeb} onChange={(e) => handleInputChange("siteWeb", e.target.value)} className="text-sm" placeholder="www.example.fr" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Réseaux Sociaux</label>
-                  <Input value={editedData.reseauxSociaux} onChange={(e) => handleInputChange("reseauxSociaux", e.target.value)} className="text-sm" placeholder="LinkedIn, Twitter, etc." />
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* DONNÉES BANCAIRES */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              Données Bancaires
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Titulaire du Compte</p><p className="text-foreground">{userData.titulaireDuCompte}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">IBAN</p><p className="text-foreground font-mono text-sm">{userData.iban}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">BIC</p><p className="text-foreground">{userData.bic}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Banque</p><p className="text-foreground">{userData.nomBanque}</p></div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Titulaire du Compte</label>
-                  <Input value={editedData.titulaireDuCompte} onChange={(e) => handleInputChange("titulaireDuCompte", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">IBAN</label>
-                  <Input value={editedData.iban} onChange={(e) => handleInputChange("iban", e.target.value)} className="text-sm" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">BIC</label>
-                    <Input value={editedData.bic} onChange={(e) => handleInputChange("bic", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Banque</label>
-                    <Input value={editedData.nomBanque} onChange={(e) => handleInputChange("nomBanque", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* FISCALITÉ */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Fiscalité
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Numéro Fiscal</p><p className="text-foreground">{userData.numeroFiscal}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Régime Fiscal</p><p className="text-foreground">{userData.regimeFiscal}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Chiffre d'Affaires Annuel</p><p className="text-foreground">{userData.chiffreAffairesAnnuel}€</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Bénéfice/Perte</p><p className="text-foreground">{userData.beneficeOuPerte}€</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Taux TVA</p><p className="text-foreground">{userData.tauxTVA}%</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Centre de Gestion Agréé</p><p className="text-foreground">{userData.centreGestionAgree}</p></div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro Fiscal</label>
-                    <Input value={editedData.numeroFiscal} onChange={(e) => handleInputChange("numeroFiscal", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Régime Fiscal</label>
-                    <select value={editedData.regimeFiscal} onChange={(e) => handleInputChange("regimeFiscal", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                      <option value="Micro-entreprise">Micro-entreprise</option>
-                      <option value="Réel">Réel</option>
-                      <option value="Simplifié">Simplifié</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Chiffre d'Affaires Annuel (€)</label>
-                    <Input type="number" value={editedData.chiffreAffairesAnnuel} onChange={(e) => handleInputChange("chiffreAffairesAnnuel", e.target.value)} className="text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Bénéfice/Perte (€)</label>
-                    <Input type="number" value={editedData.beneficeOuPerte} onChange={(e) => handleInputChange("beneficeOuPerte", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Taux TVA (%)</label>
-                    <Input type="number" value={editedData.tauxTVA} onChange={(e) => handleInputChange("tauxTVA", e.target.value)} className="text-sm" step="0.1" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Centre de Gestion Agréé</label>
-                    <Input value={editedData.centreGestionAgree} onChange={(e) => handleInputChange("centreGestionAgree", e.target.value)} className="text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* ORGANISMES SOCIAUX */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Organismes Sociaux
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Affiliation URSSAF</p><p className="text-foreground">{userData.affiliationURSSAF}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">N° Compte URSSAF</p><p className="text-foreground">{userData.numeroCompteURSSAF}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Caisse de Retraite</p><p className="text-foreground">{userData.caisseretraite}</p></div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Affiliation URSSAF</label>
-                  <Input value={editedData.affiliationURSSAF} onChange={(e) => handleInputChange("affiliationURSSAF", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">N° Compte URSSAF</label>
-                  <Input value={editedData.numeroCompteURSSAF} onChange={(e) => handleInputChange("numeroCompteURSSAF", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Caisse de Retraite</label>
-                  <Input value={editedData.caisseretraite} onChange={(e) => handleInputChange("caisseretraite", e.target.value)} className="text-sm" />
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* ASSURANCES PROFESSIONNELLES */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-primary" />
-              Assurances Professionnelles
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-3">
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="font-medium text-foreground mb-2">Responsabilité Civile Professionnelle</p>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">N°:</span> {userData.rcProNumero}</p>
-                    <p><span className="text-muted-foreground">Assureur:</span> {userData.rcProAssureur}</p>
-                    <p><span className="text-muted-foreground">Expiration:</span> {userData.rcProDateExpiration}</p>
-                  </div>
-                </div>
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="font-medium text-foreground mb-2">Assurance Locaux</p>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">N°:</span> {userData.assuranceLocauxNumero}</p>
-                    <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceLocauxAssureur}</p>
-                    <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceLocauxDateExpiration}</p>
-                  </div>
-                </div>
-                {userData.assuranceAutoNumero && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="font-medium text-foreground mb-2">Assurance Automobile</p>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="text-muted-foreground">N°:</span> {userData.assuranceAutoNumero}</p>
-                      <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceAutoAssureur}</p>
-                      <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceAutoDateExpiration}</p>
                     </div>
                   </div>
                 )}
-                {userData.assuranceCyberNumero && (
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="font-medium text-foreground mb-2">Assurance Cyber</p>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="text-muted-foreground">N°:</span> {userData.assuranceCyberNumero}</p>
-                      <p><span className="text-muted-foreground">Assureur:</span> {userData.assuranceCyberAssureur}</p>
-                      <p><span className="text-muted-foreground">Expiration:</span> {userData.assuranceCyberDateExpiration}</p>
+
+                {/* Section Document d'IdentitÃ© */}
+                {visibleBlocks.identite && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">PiÃ¨ce d'IdentitÃ©</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('identite')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Type de document</label>
+                        <select value={editedData.typeDocument} onChange={(e) => handleInputChange("typeDocument", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                          <option value="Passeport">Passeport</option>
+                          <option value="Carte nationale">Carte nationale</option>
+                          <option value="Permis de conduire">Permis de conduire</option>
+                          <option value="Titre de sÃ©jour">Titre de sÃ©jour</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro</label>
+                        <p className="text-xs text-foreground mb-2 italic">NumÃ©ro attribuÃ© au document sÃ©lectionnÃ©</p>
+                        <Input value={editedData.numeroDocument} onChange={(e) => handleInputChange("numeroDocument", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date d'expiration</label>
+                        <Input type="date" value={editedData.dateExpiration} onChange={(e) => handleInputChange("dateExpiration", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro de SÃ©curitÃ© Sociale</label>
+                        <Input value={editedData.numeroSecuriteSociale} onChange={(e) => handleInputChange("numeroSecuriteSociale", e.target.value)} className="text-sm" />
+                      </div>
                     </div>
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {[
-                  { key: "rcPro", label: "RC Professionnelle", num: "rcProNumero", ass: "rcProAssureur", exp: "rcProDateExpiration" },
-                  { key: "locaux", label: "Assurance Locaux", num: "assuranceLocauxNumero", ass: "assuranceLocauxAssureur", exp: "assuranceLocauxDateExpiration" },
-                  { key: "auto", label: "Assurance Automobile", num: "assuranceAutoNumero", ass: "assuranceAutoAssureur", exp: "assuranceAutoDateExpiration" },
-                  { key: "cyber", label: "Assurance Cyber", num: "assuranceCyberNumero", ass: "assuranceCyberAssureur", exp: "assuranceCyberDateExpiration" }
-                ].map((ins) => (
-                  <div key={ins.key} className="p-4 border rounded-lg bg-secondary/10">
-                    <h4 className="font-medium text-sm mb-3">{ins.label}</h4>
+
+                {/* Section CoordonnÃ©es */}
+                {visibleBlocks.coordonnees && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">CoordonnÃ©es</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('coordonnees')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Email</label>
+                        <Input type="email" value={editedData.email} onChange={(e) => handleInputChange("email", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">TÃ©lÃ©phone</label>
+                        <Input value={editedData.telephone} onChange={(e) => handleInputChange("telephone", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">TÃ©lÃ©phone secondaire</label>
+                      <Input value={editedData.telephoneSecondaire} onChange={(e) => handleInputChange("telephoneSecondaire", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Adresse */}
+                {visibleBlocks.adresse && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Adresse</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('adresse')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Numéro</label>
+                          <Input value={editedData.numeroAdresse} onChange={(e) => handleInputChange("numeroAdresse", e.target.value)} className="text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Type de voie</label>
+                          <Input value={editedData.typeVoieAdresse} onChange={(e) => handleInputChange("typeVoieAdresse", e.target.value)} className="text-sm" placeholder="Rue, Avenue, Boulevard..." />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom de la voie</label>
+                          <Input value={editedData.nomVoieAdresse} onChange={(e) => handleInputChange("nomVoieAdresse", e.target.value)} className="text-sm" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Code Postal</label>
+                          <Input value={editedData.codePostal} onChange={(e) => handleInputChange("codePostal", e.target.value)} className="text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Commune</label>
+                          <Input value={editedData.commune} onChange={(e) => handleInputChange("commune", e.target.value)} className="text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Pays</label>
+                          <Input value={editedData.pays} onChange={(e) => handleInputChange("pays", e.target.value)} className="text-sm" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Adresse Secondaire */}
+                {visibleBlocks.adresseSecondaire && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Adresse Secondaire</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('adresseSecondaire')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
-                        <Input value={editedData[ins.num as keyof UserData] as string} onChange={(e) => handleInputChange(ins.num as keyof UserData, e.target.value)} className="text-sm" />
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Adresse</label>
+                        <Input value={editedData.numeroAdresseSecondaire} onChange={(e) => handleInputChange("numeroAdresseSecondaire", e.target.value)} className="text-sm" />
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Assureur</label>
-                          <Input value={editedData[ins.ass as keyof UserData] as string} onChange={(e) => handleInputChange(ins.ass as keyof UserData, e.target.value)} className="text-sm" />
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Code Postal</label>
+                          <Input value={editedData.codePostalSecondaire} onChange={(e) => handleInputChange("codePostalSecondaire", e.target.value)} className="text-sm" />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Expiration</label>
-                          <Input type="date" value={editedData[ins.exp as keyof UserData] as string} onChange={(e) => handleInputChange(ins.exp as keyof UserData, e.target.value)} className="text-sm" />
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Ville</label>
+                          <Input value={editedData.communeSecondaire} onChange={(e) => handleInputChange("communeSecondaire", e.target.value)} className="text-sm" />
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
+                )}
 
-          {/* CONFORMITÉ & CERTIFICATIONS */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Conformité & Certifications
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-3">
-                {userData.certifications.length > 0 && (
+                {/* Section Permis de Conduire */}
+                {visibleBlocks.permis && (
                   <div>
-                    <p className="text-sm font-medium text-foreground mb-2">Certifications</p>
-                    {userData.certifications.map((cert, index) => (
-                      <div key={index} className="p-3 bg-secondary/30 rounded mb-2">
-                        <p className="font-medium text-sm">{cert.nom}</p>
-                        <p className="text-xs text-muted-foreground">N°: {cert.numero}</p>
-                        <p className="text-xs text-muted-foreground">Valide jusqu'au {cert.dateExpiration}</p>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Permis de Conduire</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('permis')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Type de permis</label>
+                        <Input value={editedData.typePermis} onChange={(e) => handleInputChange("typePermis", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro de permis</label>
+                        <Input value={editedData.numeroPermis} onChange={(e) => handleInputChange("numeroPermis", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date de validitÃ©</label>
+                      <Input type="date" value={editedData.dateValiditePermis} onChange={(e) => handleInputChange("dateValiditePermis", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Section VÃ©hicules */}
+                {visibleBlocks.vehicules && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">VÃ©hicules</h3>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const newVehicule = { marque: "", modele: "", immatriculation: "", chevaux: "", annee: "", carburant: "" };
+                            setEditedData({
+                              ...editedData,
+                              vehicules: [...editedData.vehicules, newVehicule]
+                            });
+                          }}
+                          className="text-xs"
+                        >
+                          + Ajouter un vÃ©hicule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => toggleBlock('vehicules')}
+                          className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {editedData.vehicules.map((vehicule, index) => (
+                      <div key={index} className="border rounded-lg p-3 mb-3 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-medium text-muted-foreground">VÃ©hicule {index + 1}</span>
+                          {editedData.vehicules.length > 1 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditedData({
+                                  ...editedData,
+                                  vehicules: editedData.vehicules.filter((_, i) => i !== index)
+                                });
+                              }}
+                              className="text-xs text-red-600"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Marque</label>
+                            <Input 
+                              value={vehicule.marque}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].marque = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="text-sm"
+                              placeholder="Ex: Peugeot"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">ModÃ¨le</label>
+                            <Input 
+                              value={vehicule.modele}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].modele = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="text-sm"
+                              placeholder="Ex: 308"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Plaque d'immatriculation</label>
+                            <Input 
+                              value={vehicule.immatriculation}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].immatriculation = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="text-sm"
+                              placeholder="Ex: AB-123-CD"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Chevaux fiscaux</label>
+                            <Input 
+                              value={vehicule.chevaux}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].chevaux = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="text-sm"
+                              placeholder="Ex: 110"
+                              type="number"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">AnnÃ©e</label>
+                            <Input 
+                              value={vehicule.annee}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].annee = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="text-sm"
+                              placeholder="Ex: 2020"
+                              type="number"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Carburant</label>
+                            <select
+                              value={vehicule.carburant}
+                              onChange={(e) => {
+                                const newVehicules = [...editedData.vehicules];
+                                newVehicules[index].carburant = e.target.value;
+                                setEditedData({ ...editedData, vehicules: newVehicules });
+                              }}
+                              className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground"
+                            >
+                              <option value="">SÃ©lectionnez...</option>
+                              <option value="Essence">Essence</option>
+                              <option value="Diesel">Diesel</option>
+                              <option value="Ã‰lectrique">Ã‰lectrique</option>
+                              <option value="Hybride">Hybride</option>
+                              <option value="Gaz">Gaz</option>
+                            </select>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
-                {userData.agrementParticulier && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Agrément Particulier</p><p className="text-foreground">{userData.agrementParticulier}</p></div>}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-3">Certifications</p>
-                  {editedData.certifications.map((cert, index) => (
-                    <div key={index} className="p-4 border rounded-lg bg-secondary/10 mb-3">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-sm">Certification {index + 1}</h4>
-                        {editedData.certifications.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCertification(index)}
-                            className="text-red-600"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
+
+                {/* Section Professionnels */}
+                {visibleBlocks.professionnels && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Informations Professionnelles</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('professionnels')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Profession</label>
+                        <Input value={editedData.profession} onChange={(e) => handleInputChange("profession", e.target.value)} className="text-sm" />
                       </div>
-                      <div className="space-y-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Entreprise</label>
+                        <Input value={editedData.entreprise} onChange={(e) => handleInputChange("entreprise", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro SIRET</label>
+                        <Input value={editedData.numeroSiret} onChange={(e) => handleInputChange("numeroSiret", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Poste</label>
+                        <Input value={editedData.poste} onChange={(e) => handleInputChange("poste", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date d'embauche</label>
+                        <Input type="date" value={editedData.dateEmbauche} onChange={(e) => handleInputChange("dateEmbauche", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Salaire annuel</label>
+                        <Input type="number" value={editedData.salaire} onChange={(e) => handleInputChange("salaire", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Type de contrat</label>
+                        <select value={editedData.typeContrat} onChange={(e) => handleInputChange("typeContrat", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                          <option value="CDI">CDI</option>
+                          <option value="CDD">CDD</option>
+                          <option value="Stage">Stage</option>
+                          <option value="Alternance">Alternance</option>
+                          <option value="IndÃ©pendant">IndÃ©pendant</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section CoordonnÃ©es Professionnelles */}
+                {visibleBlocks.coordProf && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">CoordonnÃ©es Professionnelles</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('coordProf')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Adresse professionnelle</label>
+                        <Input value={editedData.adresseProfessionnelle} onChange={(e) => handleInputChange("adresseProfessionnelle", e.target.value)} className="text-sm" />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Nom</label>
-                          <Input value={cert.nom} onChange={(e) => {
-                            const newCerts = [...editedData.certifications];
-                            newCerts[index].nom = e.target.value;
-                            handleInputChange("certifications", newCerts);
-                          }} className="text-sm" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro</label>
-                            <Input value={cert.numero} onChange={(e) => {
-                              const newCerts = [...editedData.certifications];
-                              newCerts[index].numero = e.target.value;
-                              handleInputChange("certifications", newCerts);
-                            }} className="text-sm" />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Date Obtention</label>
-                            <Input type="date" value={cert.dateObtention} onChange={(e) => {
-                              const newCerts = [...editedData.certifications];
-                              newCerts[index].dateObtention = e.target.value;
-                              handleInputChange("certifications", newCerts);
-                            }} className="text-sm" />
-                          </div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">TÃ©lÃ©phone professionnel</label>
+                          <Input value={editedData.telephoneProfessionnel} onChange={(e) => handleInputChange("telephoneProfessionnel", e.target.value)} className="text-sm" />
                         </div>
                         <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Date Expiration</label>
-                          <Input type="date" value={cert.dateExpiration} onChange={(e) => {
-                            const newCerts = [...editedData.certifications];
-                            newCerts[index].dateExpiration = e.target.value;
-                            handleInputChange("certifications", newCerts);
-                          }} className="text-sm" />
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Email professionnel</label>
+                          <Input type="email" value={editedData.emailProfessionnel} onChange={(e) => handleInputChange("emailProfessionnel", e.target.value)} className="text-sm" />
                         </div>
                       </div>
                     </div>
-                  ))}
-                  <Button variant="outline" onClick={addCertification} className="w-full text-sm">
-                    + Ajouter une certification
+                  </div>
+                )}
+
+                {/* Section Informations Bancaires */}
+                {visibleBlocks.bancaires && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Informations Bancaires</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('bancaires')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">IBAN</label>
+                        <Input value={editedData.iban} onChange={(e) => handleInputChange("iban", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">BIC</label>
+                        <Input value={editedData.bic} onChange={(e) => handleInputChange("bic", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom de la banque</label>
+                      <Input value={editedData.nomBanque} onChange={(e) => handleInputChange("nomBanque", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Section FiscalitÃ© */}
+                {visibleBlocks.fiscalite && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">FiscalitÃ© <span className="text-xs text-gray-500">(pour les entreprises)</span></h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('fiscalite')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro fiscal</label>
+                        <Input value={editedData.numeroFiscal} onChange={(e) => handleInputChange("numeroFiscal", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro de TVA</label>
+                        <Input value={editedData.numeroTVA} onChange={(e) => handleInputChange("numeroTVA", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Revenu annuel</label>
+                      <Input type="number" value={editedData.revenuAnnuel} onChange={(e) => handleInputChange("revenuAnnuel", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Revenus Fiscaux du Foyer */}
+                {visibleBlocks.revenus && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Revenus Fiscaux du Foyer</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('revenus')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Revenu fiscal du foyer</label>
+                        <Input type="number" value={editedData.revenuFiscalFoyer} onChange={(e) => handleInputChange("revenuFiscalFoyer", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Quotient familial</label>
+                        <Input type="number" step="0.1" value={editedData.quotientFamilial} onChange={(e) => handleInputChange("quotientFamilial", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section SantÃ© */}
+                {visibleBlocks.sante && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">SantÃ©</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('sante')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro de mutuelle</label>
+                        <Input value={editedData.numeroMutuelle} onChange={(e) => handleInputChange("numeroMutuelle", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom de la mutuelle</label>
+                        <Input value={editedData.mutuelle} onChange={(e) => handleInputChange("mutuelle", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Groupe sanguin</label>
+                        <select value={editedData.groupeSanguin} onChange={(e) => handleInputChange("groupeSanguin", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background dark:bg-background dark:text-foreground">
+                          <option value="O+">O+</option>
+                          <option value="O-">O-</option>
+                          <option value="A+">A+</option>
+                          <option value="A-">A-</option>
+                          <option value="B+">B+</option>
+                          <option value="B-">B-</option>
+                          <option value="AB+">AB+</option>
+                          <option value="AB-">AB-</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Allergies</label>
+                        <Input value={editedData.allergies} onChange={(e) => handleInputChange("allergies", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Assurances */}
+                {visibleBlocks.assurances && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Assurances</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('assurances')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NÂ° Assurance VÃ©hicule</label>
+                        <Input value={editedData.numeroAssuranceVehicule} onChange={(e) => handleInputChange("numeroAssuranceVehicule", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Assurance VÃ©hicule</label>
+                        <Input value={editedData.assuranceVehicule} onChange={(e) => handleInputChange("assuranceVehicule", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NÂ° Assurance Habitation</label>
+                        <Input value={editedData.numeroAssuranceHabitation} onChange={(e) => handleInputChange("numeroAssuranceHabitation", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Assurance Habitation</label>
+                        <Input value={editedData.assuranceHabitation} onChange={(e) => handleInputChange("assuranceHabitation", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NÂ° Assurance ResponsabilitÃ© Civile</label>
+                      <Input value={editedData.numeroAssuranceResponsabilite} onChange={(e) => handleInputChange("numeroAssuranceResponsabilite", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Section RQTH */}
+                {visibleBlocks.rqth && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">RQTH (Reconnaissance de la QualitÃ© de Travailleur HandicapÃ©)</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('rqth')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="mb-4">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-2 block">ÃŠtes-vous RQTH ?</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="rqth"
+                            value="oui"
+                            checked={editedData.rqthStatut === "oui"}
+                            onChange={(e) => handleInputChange("rqthStatut", e.target.value)}
+                            className="cursor-pointer"
+                          />
+                          <span className="text-sm">Oui</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="rqth"
+                            value="non"
+                            checked={editedData.rqthStatut === "non"}
+                            onChange={(e) => handleInputChange("rqthStatut", e.target.value)}
+                            className="cursor-pointer"
+                          />
+                          <span className="text-sm">Non</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {editedData.rqthStatut === "oui" && (
+                      <div className="space-y-3 mt-4 p-3 bg-secondary/30 rounded-lg border border-secondary">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">NumÃ©ro RQTH</label>
+                          <Input value={editedData.rqthNumero} onChange={(e) => handleInputChange("rqthNumero", e.target.value)} className="text-sm" placeholder="Ex: RQTH0123456789" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Date de renouvellement</label>
+                          <Input type="date" value={editedData.rqthDateRenouvellement} onChange={(e) => handleInputChange("rqthDateRenouvellement", e.target.value)} className="text-sm" />
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Organisme de reconnaissance</label>
+                          <Input value={editedData.rqthOrganisme} onChange={(e) => handleInputChange("rqthOrganisme", e.target.value)} className="text-sm" placeholder="Ex: MDPH" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section Ã‰ducation */}
+                {visibleBlocks.education && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Ã‰ducation</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('education')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Niveau de diplÃ´me</label>
+                        <Input value={editedData.diplomeNiveau} onChange={(e) => handleInputChange("diplomeNiveau", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">SpÃ©cialitÃ©</label>
+                        <Input value={editedData.diplomeSpecialite} onChange={(e) => handleInputChange("diplomeSpecialite", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Ã‰tablissement d'Ã©tudes</label>
+                        <Input value={editedData.etablissementEtudes} onChange={(e) => handleInputChange("etablissementEtudes", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">AnnÃ©e d'obtention</label>
+                        <Input type="number" value={editedData.dateObtention} onChange={(e) => handleInputChange("dateObtention", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Contact d'Urgence */}
+                {visibleBlocks.urgence && (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-sm font-semibold text-foreground border-b pb-2 flex-1">Contact d'Urgence</h3>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleBlock('urgence')}
+                        className="text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Nom</label>
+                        <Input value={editedData.nomUrgence} onChange={(e) => handleInputChange("nomUrgence", e.target.value)} className="text-sm" />
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">TÃ©lÃ©phone</label>
+                        <Input value={editedData.telephoneUrgence} onChange={(e) => handleInputChange("telephoneUrgence", e.target.value)} className="text-sm" />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="text-xs sm:text-sm font-medium text-muted-foreground mb-1 block">Relation</label>
+                      <Input value={editedData.relationUrgence} onChange={(e) => handleInputChange("relationUrgence", e.target.value)} className="text-sm" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4">
+                  <Button onClick={handleSaveProfile} className="gap-2 flex-1 sm:flex-none">
+                    <Save className="w-4 h-4" />
+                    Enregistrer
+                  </Button>
+                  <Button onClick={handleCancelEdit} variant="outline" className="gap-2 flex-1 sm:flex-none">
+                    <X className="w-4 h-4" />
+                    Annuler
                   </Button>
                 </div>
-
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Agrément Particulier</label>
-                  <Input value={editedData.agrementParticulier} onChange={(e) => handleInputChange("agrementParticulier", e.target.value)} className="text-sm" placeholder="Ex: Agrément travaux, certification ISO, etc." />
-                </div>
               </div>
-            )}
-          </Card>
+            ) : isMobile ? (
+              // AFFICHAGE MOBILE - avec accordÃ©ons repliables
+              <div className="space-y-3">
+                {/* Infos principales */}
+                <Card className="p-4 bg-primary/5 border-primary/20">
+                  <div className="space-y-3">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-bold text-foreground">
+                        {userData.prenom} {userData.nom}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({userData.dateNaissance ? new Date(userData.dateNaissance).getFullYear() : '?'})
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="text-muted-foreground">Email:</span> {userData.email}</p>
+                      <p><span className="text-muted-foreground">TÃ©lÃ©phone:</span> {userData.telephone}</p>
+                      <p><span className="text-muted-foreground">Adresse:</span> {userData.numeroAdresse ? `${userData.numeroAdresse} ${userData.typeVoieAdresse} ${userData.nomVoieAdresse}` : ''}, {userData.codePostal} {userData.commune}</p>
+                    </div>
+                  </div>
+                </Card>
 
-          {/* DONNÉES COMMERCIALES */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-primary" />
-              Données Commerciales
-            </h3>
+                {visibleBlocks.civiles && (
+                  <CollapsibleSection title="Informations Civiles" defaultOpen={false} blockKey="civiles" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">CivilitÃ©</p><p className="text-sm font-medium">{userData.civilite}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Nom de naissance</p><p className="text-sm font-medium">{userData.nomNaissance}</p></div>
+                      <div><p className="text-xs text-muted-foreground">NationalitÃ©</p><p className="text-sm font-medium">{userData.nationalite}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Situation familiale</p><p className="text-sm font-medium">{userData.situation}</p></div>
+                    </div>
+                  </CollapsibleSection>
+                )}
 
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Effectif Total</p><p className="text-foreground">{userData.effectifTotal} employés</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Zone Géographique de Couverture</p><p className="text-foreground">{userData.zoneGeographique}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Codification Secteur</p><p className="text-foreground">{userData.codificationSecteur}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Délai Moyen de Paiement</p><p className="text-foreground">{userData.delaiMoyenPaiement}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Modalités de Facturation</p><p className="text-foreground">{userData.modalitesFacturation}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Conditions de Règlement</p><p className="text-foreground">{userData.conditionsReglement}</p></div>
+                {visibleBlocks.identite && (
+                  <CollapsibleSection title="PiÃ¨ce d'IdentitÃ©" defaultOpen={false} blockKey="identite" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium">{userData.typeDocument}</p></div>
+                      <div><p className="text-xs text-muted-foreground">NumÃ©ro</p><p className="text-sm font-medium">{userData.numeroDocument}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Expiration</p><p className="text-sm font-medium">{userData.dateExpiration}</p></div>
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.professionnels && userData.profession && (
+                  <CollapsibleSection title="Professionnelles" defaultOpen={false} blockKey="professionnels" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">Profession</p><p className="text-sm font-medium">{userData.profession}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Entreprise</p><p className="text-sm font-medium">{userData.entreprise}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Poste</p><p className="text-sm font-medium">{userData.poste}</p></div>
+                      {userData.typeContrat && <div><p className="text-xs text-muted-foreground">Contrat</p><p className="text-sm font-medium">{userData.typeContrat}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.sante && (
+                  <CollapsibleSection title="Informations de SantÃ©" defaultOpen={false} blockKey="sante" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">Groupe sanguin</p><p className="text-sm font-medium">{userData.groupeSanguin}</p></div>
+                      <div><p className="text-xs text-muted-foreground">Allergies</p><p className="text-sm font-medium">{userData.allergies}</p></div>
+                      {userData.mutuelle && <div><p className="text-xs text-muted-foreground">Mutuelle</p><p className="text-sm font-medium">{userData.mutuelle}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.assurances && (userData.assuranceVehicule || userData.assuranceHabitation) && (
+                  <CollapsibleSection title="Assurances" defaultOpen={false} blockKey="assurances" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.assuranceVehicule && <div><p className="text-xs text-muted-foreground">VÃ©hicule</p><p className="text-sm font-medium">{userData.assuranceVehicule}</p></div>}
+                      {userData.assuranceHabitation && <div><p className="text-xs text-muted-foreground">Habitation</p><p className="text-sm font-medium">{userData.assuranceHabitation}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.urgence && userData.nomUrgence && (
+                  <CollapsibleSection title="Contact d'Urgence" defaultOpen={false} blockKey="urgence" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">Nom</p><p className="text-sm font-medium">{userData.nomUrgence}</p></div>
+                      <div><p className="text-xs text-muted-foreground">TÃ©lÃ©phone</p><p className="text-sm font-medium">{userData.telephoneUrgence}</p></div>
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.adresseSecondaire && (userData.numeroAdresseSecondaire || userData.codePostalSecondaire || userData.communeSecondaire) && (
+                  <CollapsibleSection title="Adresses Secondaires" defaultOpen={false} blockKey="adresseSecondaire" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.numeroAdresseSecondaire && <div><p className="text-xs text-muted-foreground">Adresse</p><p className="text-sm font-medium">{userData.numeroAdresseSecondaire}</p></div>}
+                      {userData.codePostalSecondaire && <div><p className="text-xs text-muted-foreground">Code postal</p><p className="text-sm font-medium">{userData.codePostalSecondaire}</p></div>}
+                      {userData.communeSecondaire && <div><p className="text-xs text-muted-foreground">Ville</p><p className="text-sm font-medium">{userData.communeSecondaire}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.permis && (userData.typePermis || userData.numeroPermis || userData.dateValiditePermis) && (
+                  <CollapsibleSection title="Permis de Conduire" defaultOpen={false} blockKey="permis" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.typePermis && <div><p className="text-xs text-muted-foreground">Type</p><p className="text-sm font-medium">{userData.typePermis}</p></div>}
+                      {userData.numeroPermis && <div><p className="text-xs text-muted-foreground">NumÃ©ro</p><p className="text-sm font-medium">{userData.numeroPermis}</p></div>}
+                      {userData.dateValiditePermis && <div><p className="text-xs text-muted-foreground">ValiditÃ©</p><p className="text-sm font-medium">{userData.dateValiditePermis}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.vehicules && userData.vehicules && userData.vehicules.length > 0 && (
+                  <CollapsibleSection title="VÃ©hicules" defaultOpen={false} blockKey="vehicules" onRemove={toggleBlock}>
+                    <div className="space-y-3">
+                      {userData.vehicules.map((v, i) => (
+                        <div key={i} className="p-3 border border-border rounded bg-secondary/20">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">VÃ©hicule {i + 1}</p>
+                          <div className="space-y-1 text-xs">
+                            {v.marque && <p><span className="text-muted-foreground">Marque:</span> {v.marque}</p>}
+                            {v.modele && <p><span className="text-muted-foreground">ModÃ¨le:</span> {v.modele}</p>}
+                            {v.immatriculation && <p><span className="text-muted-foreground">Immatriculation:</span> {v.immatriculation}</p>}
+                            {v.chevaux && <p><span className="text-muted-foreground">Chevaux:</span> {v.chevaux}</p>}
+                            {v.annee && <p><span className="text-muted-foreground">AnnÃ©e:</span> {v.annee}</p>}
+                            {v.carburant && <p><span className="text-muted-foreground">Carburant:</span> {v.carburant}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.coordProf && (userData.adresseProfessionnelle || userData.telephoneProfessionnel || userData.emailProfessionnel) && (
+                  <CollapsibleSection title="CoordonnÃ©es Professionnelles" defaultOpen={false} blockKey="coordProf" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.adresseProfessionnelle && <div><p className="text-xs text-muted-foreground">Adresse</p><p className="text-sm font-medium">{userData.adresseProfessionnelle}</p></div>}
+                      {userData.telephoneProfessionnel && <div><p className="text-xs text-muted-foreground">TÃ©lÃ©phone</p><p className="text-sm font-medium">{userData.telephoneProfessionnel}</p></div>}
+                      {userData.emailProfessionnel && <div><p className="text-xs text-muted-foreground">Email</p><p className="text-sm font-medium">{userData.emailProfessionnel}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.bancaires && (userData.iban || userData.bic || userData.nomBanque) && (
+                  <CollapsibleSection title="Informations Bancaires" defaultOpen={false} blockKey="bancaires" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.nomBanque && <div><p className="text-xs text-muted-foreground">Banque</p><p className="text-sm font-medium">{userData.nomBanque}</p></div>}
+                      {userData.iban && <div><p className="text-xs text-muted-foreground">IBAN</p><p className="text-sm font-medium">{userData.iban}</p></div>}
+                      {userData.bic && <div><p className="text-xs text-muted-foreground">BIC</p><p className="text-sm font-medium">{userData.bic}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.fiscalite && (userData.numeroFiscal || userData.numeroTVA || userData.revenuAnnuel) && (
+                  <CollapsibleSection title="FiscalitÃ©" defaultOpen={false} blockKey="fiscalite" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.numeroFiscal && <div><p className="text-xs text-muted-foreground">NumÃ©ro fiscal</p><p className="text-sm font-medium">{userData.numeroFiscal}</p></div>}
+                      {userData.numeroTVA && <div><p className="text-xs text-muted-foreground">NumÃ©ro TVA</p><p className="text-sm font-medium">{userData.numeroTVA}</p></div>}
+                      {userData.revenuAnnuel && <div><p className="text-xs text-muted-foreground">Revenu annuel</p><p className="text-sm font-medium">{userData.revenuAnnuel}â‚¬</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.revenus && (userData.revenuFiscalFoyer || userData.quotientFamilial) && (
+                  <CollapsibleSection title="Revenus du Foyer" defaultOpen={false} blockKey="revenus" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.revenuFiscalFoyer && <div><p className="text-xs text-muted-foreground">Revenu fiscal</p><p className="text-sm font-medium">{userData.revenuFiscalFoyer}â‚¬</p></div>}
+                      {userData.quotientFamilial && <div><p className="text-xs text-muted-foreground">Quotient familial</p><p className="text-sm font-medium">{userData.quotientFamilial}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.rqth && userData.rqthStatut && (
+                  <CollapsibleSection title="RQTH" defaultOpen={false} blockKey="rqth" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      <div><p className="text-xs text-muted-foreground">Statut</p><p className="text-sm font-medium">{userData.rqthStatut === "oui" ? "Oui" : "Non"}</p></div>
+                      {userData.rqthStatut === "oui" && (
+                        <>
+                          {userData.rqthNumero && <div><p className="text-xs text-muted-foreground">NumÃ©ro</p><p className="text-sm font-medium">{userData.rqthNumero}</p></div>}
+                          {userData.rqthDateRenouvellement && <div><p className="text-xs text-muted-foreground">Renouvellement</p><p className="text-sm font-medium">{userData.rqthDateRenouvellement}</p></div>}
+                          {userData.rqthOrganisme && <div><p className="text-xs text-muted-foreground">Organisme</p><p className="text-sm font-medium">{userData.rqthOrganisme}</p></div>}
+                        </>
+                      )}
+                    </div>
+                  </CollapsibleSection>
+                )}
+
+                {visibleBlocks.education && (userData.diplomeNiveau || userData.diplomeSpecialite || userData.etablissementEtudes || userData.dateObtention) && (
+                  <CollapsibleSection title="Ã‰ducation" defaultOpen={false} blockKey="education" onRemove={toggleBlock}>
+                    <div className="space-y-2">
+                      {userData.diplomeNiveau && <div><p className="text-xs text-muted-foreground">Niveau</p><p className="text-sm font-medium">{userData.diplomeNiveau}</p></div>}
+                      {userData.diplomeSpecialite && <div><p className="text-xs text-muted-foreground">SpÃ©cialitÃ©</p><p className="text-sm font-medium">{userData.diplomeSpecialite}</p></div>}
+                      {userData.etablissementEtudes && <div><p className="text-xs text-muted-foreground">Ã‰tablissement</p><p className="text-sm font-medium">{userData.etablissementEtudes}</p></div>}
+                      {userData.dateObtention && <div><p className="text-xs text-muted-foreground">AnnÃ©e</p><p className="text-sm font-medium">{userData.dateObtention}</p></div>}
+                    </div>
+                  </CollapsibleSection>
+                )}
               </div>
             ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Effectif Total</label>
-                  <Input value={editedData.effectifTotal} onChange={(e) => handleInputChange("effectifTotal", e.target.value)} className="text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Zone Géographique de Couverture</label>
-                  <Input value={editedData.zoneGeographique} onChange={(e) => handleInputChange("zoneGeographique", e.target.value)} className="text-sm" placeholder="Ex: Île-de-France, Rhône-Alpes, etc." />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Codification Secteur</label>
-                  <Input value={editedData.codificationSecteur} onChange={(e) => handleInputChange("codificationSecteur", e.target.value)} className="text-sm" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              // AFFICHAGE DESKTOP - complet
+              <div className="space-y-6">
+                {/* Section Informations Civiles */}
+                {visibleBlocks.civiles && (
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Délai Moyen de Paiement</label>
-                    <Input value={editedData.delaiMoyenPaiement} onChange={(e) => handleInputChange("delaiMoyenPaiement", e.target.value)} className="text-sm" placeholder="Ex: 30 jours" />
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Informations Civiles</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">CivilitÃ©</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.civilite}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">PrÃ©nom</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.prenom}</p></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      {userData.nomUsage && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nom d'usage</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nomUsage}</p></div>
+                      )}
+                      {userData.nomNaissance && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nom de naissance</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nomNaissance}</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Date de naissance</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.dateNaissance}</p></div>
+                      {userData.codePostalNaissance && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Lieu de naissance avec code postal</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.communeNaissance} ({userData.codePostalNaissance})</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NationalitÃ©</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nationalite}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Situation familiale</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.situation}</p></div>
+                    </div>
+                    <div className="mt-3">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nombre d'enfants</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nombreEnfants}</p></div>
+                    </div>
                   </div>
+                )}
+
+                {/* Section Document d'IdentitÃ© */}
+                {visibleBlocks.identite && (
                   <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Modalités de Facturation</label>
-                    <Input value={editedData.modalitesFacturation} onChange={(e) => handleInputChange("modalitesFacturation", e.target.value)} className="text-sm" />
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">PiÃ¨ce d'IdentitÃ©</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Type de document</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.typeDocument}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro</p><p className="text-xs text-foreground mb-2 italic">NumÃ©ro attribuÃ© au document sÃ©lectionnÃ©</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroDocument}</p></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Date d'expiration</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.dateExpiration}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro de SÃ©curitÃ© Sociale</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroSecuriteSociale}</p></div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Conditions de Règlement</label>
-                  <Input value={editedData.conditionsReglement} onChange={(e) => handleInputChange("conditionsReglement", e.target.value)} className="text-sm" placeholder="Ex: Virement, carte bancaire, etc." />
-                </div>
+                )}
+
+                {/* Section CoordonnÃ©es */}
+                {visibleBlocks.coordonnees && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">CoordonnÃ©es</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Email</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.email}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">TÃ©lÃ©phone</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.telephone}</p></div>
+                    </div>
+                    {userData.telephoneSecondaire && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">TÃ©lÃ©phone secondaire</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.telephoneSecondaire}</p></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section Adresse */}
+                {visibleBlocks.adresse && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Adresse</h3>
+                    <div className="space-y-3">
+                      {userData.numeroAdresse && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Adresse</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroAdresse} {userData.typeVoieAdresse} {userData.nomVoieAdresse}</p></div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Code Postal</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.codePostal}</p></div>
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Commune</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.commune}</p></div>
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Pays</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.pays}</p></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Adresse Secondaire */}
+                {visibleBlocks.adresseSecondaire && (userData.numeroAdresseSecondaire || userData.codePostalSecondaire || userData.communeSecondaire) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Adresse Secondaire</h3>
+                    <div className="space-y-3">
+                      {userData.numeroAdresseSecondaire && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Adresse</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroAdresseSecondaire}</p></div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        {userData.codePostalSecondaire && (
+                          <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Code Postal</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.codePostalSecondaire}</p></div>
+                        )}
+                        {userData.communeSecondaire && (
+                          <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Ville</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.communeSecondaire}</p></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Permis de Conduire */}
+                {visibleBlocks.permis && (userData.typePermis || userData.numeroPermis || userData.dateValiditePermis) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Permis de Conduire</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.typePermis && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Type de permis</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.typePermis}</p></div>
+                      )}
+                      {userData.numeroPermis && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro de permis</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroPermis}</p></div>
+                      )}
+                    </div>
+                    {userData.dateValiditePermis && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Date de validitÃ©</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.dateValiditePermis}</p></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section VÃ©hicules */}
+                {visibleBlocks.vehicules && userData.vehicules && userData.vehicules.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">VÃ©hicules</h3>
+                    <div className="space-y-3">
+                      {userData.vehicules.map((vehicule, index) => (
+                        <div key={index} className="p-3 sm:p-4 bg-secondary/50 rounded-lg border border-secondary">
+                          <p className="text-xs font-medium text-muted-foreground mb-3">VÃ©hicule {index + 1}</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {vehicule.marque && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Marque</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.marque}</p>
+                              </div>
+                            )}
+                            {vehicule.modele && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">ModÃ¨le</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.modele}</p>
+                              </div>
+                            )}
+                            {vehicule.immatriculation && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Plaque d'immatriculation</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.immatriculation}</p>
+                              </div>
+                            )}
+                            {vehicule.chevaux && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Chevaux fiscaux</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.chevaux}</p>
+                              </div>
+                            )}
+                            {vehicule.annee && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">AnnÃ©e</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.annee}</p>
+                              </div>
+                            )}
+                            {vehicule.carburant && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Carburant</p>
+                                <p className="font-medium text-foreground text-sm">{vehicule.carburant}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Professionnels */}
+                {visibleBlocks.professionnels && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Informations Professionnelles</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Profession</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.profession}</p></div>
+                      <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Entreprise</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.entreprise}</p></div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      {userData.numeroSiret && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro SIRET</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroSiret}</p></div>
+                      )}
+                      {userData.poste && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Poste</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.poste}</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-3">
+                      {userData.dateEmbauche && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Date d'embauche</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.dateEmbauche}</p></div>
+                      )}
+                      {userData.salaire && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Salaire annuel</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.salaire}â‚¬</p></div>
+                      )}
+                      {userData.typeContrat && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Type de contrat</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.typeContrat}</p></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section CoordonnÃ©es Professionnelles */}
+                {visibleBlocks.coordProf && (userData.adresseProfessionnelle || userData.telephoneProfessionnel || userData.emailProfessionnel) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">CoordonnÃ©es Professionnelles</h3>
+                    <div className="space-y-3">
+                      {userData.adresseProfessionnelle && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Adresse professionnelle</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.adresseProfessionnelle}</p></div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        {userData.telephoneProfessionnel && (
+                          <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">TÃ©lÃ©phone professionnel</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.telephoneProfessionnel}</p></div>
+                        )}
+                        {userData.emailProfessionnel && (
+                          <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Email professionnel</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.emailProfessionnel}</p></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Informations Bancaires */}
+                {visibleBlocks.bancaires && (userData.iban || userData.bic || userData.nomBanque) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Informations Bancaires</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.iban && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">IBAN</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.iban}</p></div>
+                      )}
+                      {userData.bic && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">BIC</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.bic}</p></div>
+                      )}
+                    </div>
+                    {userData.nomBanque && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nom de la banque</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nomBanque}</p></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section FiscalitÃ© */}
+                {visibleBlocks.fiscalite && (userData.numeroFiscal || userData.numeroTVA || userData.revenuAnnuel) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">FiscalitÃ© <span className="text-xs text-gray-500">(pour les entreprises)</span></h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.numeroFiscal && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro fiscal</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroFiscal}</p></div>
+                      )}
+                      {userData.numeroTVA && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro de TVA</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroTVA}</p></div>
+                      )}
+                    </div>
+                    {userData.revenuAnnuel && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Revenu annuel</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.revenuAnnuel}â‚¬</p></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section Revenus Fiscaux du Foyer */}
+                {visibleBlocks.revenus && (userData.revenuFiscalFoyer || userData.quotientFamilial) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Revenus Fiscaux du Foyer</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.revenuFiscalFoyer && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Revenu fiscal du foyer</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.revenuFiscalFoyer}â‚¬</p></div>
+                      )}
+                      {userData.quotientFamilial && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Quotient familial</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.quotientFamilial}</p></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section SantÃ© */}
+                {visibleBlocks.sante && (userData.numeroMutuelle || userData.mutuelle || userData.groupeSanguin || userData.allergies) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">SantÃ©</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.numeroMutuelle && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NumÃ©ro de mutuelle</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroMutuelle}</p></div>
+                      )}
+                      {userData.mutuelle && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nom de la mutuelle</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.mutuelle}</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      {userData.groupeSanguin && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Groupe sanguin</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.groupeSanguin}</p></div>
+                      )}
+                      {userData.allergies && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Allergies</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.allergies}</p></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Assurances */}
+                {visibleBlocks.assurances && (userData.numeroAssuranceVehicule || userData.assuranceVehicule || userData.numeroAssuranceHabitation || userData.assuranceHabitation || userData.numeroAssuranceResponsabilite) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Assurances</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.numeroAssuranceVehicule && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NÂ° Assurance VÃ©hicule</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroAssuranceVehicule}</p></div>
+                      )}
+                      {userData.assuranceVehicule && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Assurance VÃ©hicule</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.assuranceVehicule}</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      {userData.numeroAssuranceHabitation && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NÂ° Assurance Habitation</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroAssuranceHabitation}</p></div>
+                      )}
+                      {userData.assuranceHabitation && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Assurance Habitation</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.assuranceHabitation}</p></div>
+                      )}
+                    </div>
+                    {userData.numeroAssuranceResponsabilite && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">NÂ° Assurance ResponsabilitÃ© Civile</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.numeroAssuranceResponsabilite}</p></div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section RQTH */}
+                {visibleBlocks.rqth && userData.rqthStatut && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">RQTH (Reconnaissance de la QualitÃ© de Travailleur HandicapÃ©)</h3>
+                    <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg mb-3">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-1">Statut RQTH</p>
+                      <p className="font-medium text-foreground text-sm sm:text-base capitalize">{userData.rqthStatut === "oui" ? "Oui" : "Non"}</p>
+                    </div>
+                    {userData.rqthStatut === "oui" && (
+                      <div className="space-y-3 p-3 sm:p-4 bg-secondary/30 rounded-lg border border-secondary">
+                        {userData.rqthNumero && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">NumÃ©ro RQTH</p>
+                            <p className="font-medium text-foreground text-sm">{userData.rqthNumero}</p>
+                          </div>
+                        )}
+                        {userData.rqthDateRenouvellement && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Date de renouvellement</p>
+                            <p className="font-medium text-foreground text-sm">{userData.rqthDateRenouvellement}</p>
+                          </div>
+                        )}
+                        {userData.rqthOrganisme && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Organisme de reconnaissance</p>
+                            <p className="font-medium text-foreground text-sm">{userData.rqthOrganisme}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Section Ã‰ducation */}
+                {visibleBlocks.education && (userData.diplomeNiveau || userData.diplomeSpecialite || userData.etablissementEtudes || userData.dateObtention) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Ã‰ducation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.diplomeNiveau && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Niveau de diplÃ´me</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.diplomeNiveau}</p></div>
+                      )}
+                      {userData.diplomeSpecialite && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">SpÃ©cialitÃ©</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.diplomeSpecialite}</p></div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3">
+                      {userData.etablissementEtudes && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Ã‰tablissement d'Ã©tudes</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.etablissementEtudes}</p></div>
+                      )}
+                      {userData.dateObtention && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">AnnÃ©e d'obtention</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.dateObtention}</p></div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Section Contact d'Urgence */}
+                {visibleBlocks.urgence && (userData.nomUrgence || userData.telephoneUrgence || userData.relationUrgence) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-3 border-b pb-2">Contact d'Urgence</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      {userData.nomUrgence && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Nom</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.nomUrgence}</p></div>
+                      )}
+                      {userData.telephoneUrgence && (
+                        <div className="p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">TÃ©lÃ©phone</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.telephoneUrgence}</p></div>
+                      )}
+                    </div>
+                    {userData.relationUrgence && (
+                      <div className="mt-3 p-3 sm:p-4 bg-secondary/50 rounded-lg"><p className="text-xs sm:text-sm text-muted-foreground mb-1">Relation</p><p className="font-medium text-foreground text-sm sm:text-base">{userData.relationUrgence}</p></div>
+                    )}
+                  </div>
+                )}
+
               </div>
             )}
           </Card>
 
-          {/* PROPRIÉTÉ INTELLECTUELLE */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Propriété Intellectuelle
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                {userData.marquesDeposees && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Marques Déposées</p><p className="text-foreground">{userData.marquesDeposees}</p></div>}
-                {userData.brevets && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Brevets</p><p className="text-foreground">{userData.brevets}</p></div>}
-                {userData.droitsAuteur && <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Droits d'Auteur</p><p className="text-foreground">{userData.droitsAuteur}</p></div>}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Marques Déposées</label>
-                  <Input value={editedData.marquesDeposees} onChange={(e) => handleInputChange("marquesDeposees", e.target.value)} className="text-sm" placeholder="Ex: Marque® (INPI - 2020)" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Brevets</label>
-                  <Input value={editedData.brevets} onChange={(e) => handleInputChange("brevets", e.target.value)} className="text-sm" placeholder="Numéros de brevets, if any" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Droits d'Auteur</label>
-                  <Input value={editedData.droitsAuteur} onChange={(e) => handleInputChange("droitsAuteur", e.target.value)} className="text-sm" />
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* CONFORMITÉ ENVIRONNEMENTALE & LÉGALE */}
-          <Card className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              Conformité Environnementale & Légale
-            </h3>
-
-            {!isEditingProfile ? (
-              <div className="space-y-2">
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Numéro ICPE</p><p className="text-foreground">{userData.numeroICPE || "Non applicable"}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Classification Environnementale</p><p className="text-foreground">{userData.classificationEnvironnementale}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Conformité RGPD</p><p className="text-foreground">{userData.conformiteRGPD}</p></div>
-                <div className="p-3 bg-secondary/30 rounded"><p className="text-xs text-muted-foreground mb-1">Registre de Traitement des Données</p><p className="text-foreground">{userData.registreTraitementDonnees}</p></div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Numéro ICPE</label>
-                  <Input value={editedData.numeroICPE} onChange={(e) => handleInputChange("numeroICPE", e.target.value)} className="text-sm" placeholder="Si établissement classé" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Classification Environnementale</label>
-                  <Input value={editedData.classificationEnvironnementale} onChange={(e) => handleInputChange("classificationEnvironnementale", e.target.value)} className="text-sm" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Conformité RGPD</label>
-                    <select value={editedData.conformiteRGPD} onChange={(e) => handleInputChange("conformiteRGPD", e.target.value)} className="w-full px-3 py-2 border rounded text-sm text-foreground bg-background">
-                      <option value="Oui">Oui</option>
-                      <option value="Non">Non</option>
-                      <option value="En cours">En cours</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Registre de Traitement des Données</label>
-                    <Input value={editedData.registreTraitementDonnees} onChange={(e) => handleInputChange("registreTraitementDonnees", e.target.value)} className="text-sm" placeholder="Date de dernière mise à jour" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* Boutons d'action */}
-          {isEditingProfile && (
-            <div className="flex gap-3 sticky bottom-4">
-              <Button onClick={handleSaveProfile} className="gap-2 flex-1 sm:flex-none">
-                <Save className="w-4 h-4" />
-                Enregistrer
-              </Button>
-              <Button onClick={handleCancelEdit} variant="outline" className="gap-2 flex-1 sm:flex-none">
-                <X className="w-4 h-4" />
-                Annuler
-              </Button>
-            </div>
-          )}
         </div>
       </main>
     </div>
@@ -1058,3 +1889,7 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
+
+

@@ -144,12 +144,25 @@ const HomeContent = ({ refreshKey, onDocumentClick }: { refreshKey: number, onDo
   const handleFillDocument = async () => {
     if (!selectedDoc) return;
     try {
+      // Récupérer les données du profil depuis sessionStorage
+      const profileData = sessionStorage.getItem("userProfileData");
+      if (!profileData) {
+        alert("Veuillez d'abord remplir votre profil avant de remplir un document");
+        return;
+      }
+
+      const userProfile = JSON.parse(profileData);
+
       // Appeler l'API pour marquer le document comme rempli
       const response = await fetch(`${API_BASE_URL}/api/documents/${selectedDoc.id}/fill`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          user_id: 'default_user',
+          profile: userProfile
+        }),
       });
 
       if (!response.ok) {
@@ -247,16 +260,16 @@ const HomeContent = ({ refreshKey, onDocumentClick }: { refreshKey: number, onDo
                   <div className="flex-1 min-w-0 w-full max-w-full">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-3 w-full max-w-full">
                       <div className="flex-1 min-w-0 w-full max-w-full">
-                        <h3 className="font-semibold text-gray-900 dark:text-white break-words text-xs sm:text-base whitespace-normal">
+                        <h3 className="font-medium text-foreground dark:text-indigo-100 break-words text-xs sm:text-base whitespace-normal">
                           {doc.nom_fichier}
                         </h3>
                         {/* Affiche la catégorie si ce n'est pas la catégorie par défaut (pour distinguer les Archivés) */}
                         {doc.categorie !== 'Documents en Cours' && (
-                            <p className="text-xs text-gray-700 dark:text-gray-300 mt-0.5 truncate">
+                            <p className="text-xs text-secondary-foreground/70 dark:text-indigo-300/60 mt-0.5 truncate">
                                 Classé dans : {doc.categorie}
                             </p>
                         )}
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                        <p className="text-xs text-muted-foreground dark:text-indigo-300/50 mt-0.5">
                           {formatDisplayDate(doc.date_ajout)}
                         </p>
                       </div>

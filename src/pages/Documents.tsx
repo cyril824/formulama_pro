@@ -94,27 +94,49 @@ const DocumentsPage: React.FC<DocumentsPageProps> = ({ currentCategory, refreshK
     const handleFillDocument = async () => {
         if (!selectedDoc) return;
         try {
-            // Appeler l'API pour marquer le document comme rempli
+            // Appeler l'API pour marquer le document comme rempli et générer le PDF
             const response = await fetch(`${API_BASE_URL}/api/documents/${selectedDoc.id}/fill`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ user_id: 'default_user' }),
             });
 
             if (!response.ok) {
-                throw new Error('Erreur lors de la mise à jour du document');
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Erreur lors de la génération du PDF');
             }
 
-            console.log('Document marqué comme rempli');
-            alert(`Document "${selectedDoc.nom_fichier}" a été marqué comme rempli!`);
+            // Le serveur retourne un fichier PDF
+            const blob = await response.blob();
+            
+            // Créer un URL temporaire pour le fichier
+            const pdfUrl = window.URL.createObjectURL(blob);
+            
+            // Déclencher le téléchargement
+            const link = document.createElement('a');
+            link.href = pdfUrl;
+            link.download = `${selectedDoc.nom_fichier.replace(/\.[^.]+$/, '')}_rempli.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Afficher le PDF dans le viewer
+            setViewingDocument({
+                fileName: `${selectedDoc.nom_fichier.replace(/\.[^.]+$/, '')}_rempli.pdf`,
+                fileUrl: pdfUrl,
+                documentId: selectedDoc.id
+            });
+            
+            console.log('Document marqué comme rempli et PDF généré');
             setShowContextMenu(false);
             setSelectedDoc(null);
             // Rafraîchir la liste
             forceRefresh();
         } catch (error) {
             console.error('Erreur:', error);
-            alert('Erreur lors du remplissage du document');
+            alert(`Erreur lors du remplissage du document: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
         }
     };
 

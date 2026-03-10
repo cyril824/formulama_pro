@@ -8,7 +8,12 @@ import base64
 import ssl
 
 # Importe toutes les fonctions nécessaires
-from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli, recuperer_toutes_categories, recuperer_stats 
+from gestion_db import ajouter_document, recuperer_documents_par_categorie, supprimer_document, initialiser_base_de_donnees, recuperer_4_derniers_documents, diagnostiquer_fichiers_locaux, recuperer_tous_documents, recuperer_document_par_id, marquer_document_signe, marquer_document_rempli, recuperer_toutes_categories, recuperer_stats
+
+# Importe les modules de gestion de profils et PDF
+from profile_manager import ProfileManager
+from pdf_generator import PDFGenerator
+from profile_schema import get_field_schema, suggest_fields 
 
 # 1. Configuration de l'application Flask
 app = Flask(__name__)
@@ -19,12 +24,27 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIST_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'dist')
 DATA_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'data')
 SIGNATURES_FOLDER_PATH = os.path.join(DATA_FOLDER_PATH, 'signatures')
-# Créer le dossier des signatures s'il n'existe pas
+TEMP_FOLDER_PATH = os.path.join(PROJECT_ROOT, 'public', 'temp')
+PDF_GEN_PATH = os.path.join(PROJECT_ROOT, 'backend', 'pdf_generation')
+
+# Créer les dossiers s'ils n'existent pas
 os.makedirs(SIGNATURES_FOLDER_PATH, exist_ok=True)
+os.makedirs(TEMP_FOLDER_PATH, exist_ok=True)
+
 print(f"[DEBUG] PROJECT_ROOT: {PROJECT_ROOT}")
 print(f"[DEBUG] DIST_FOLDER_PATH: {DIST_FOLDER_PATH}")
 print(f"[DEBUG] DIST exists: {os.path.exists(DIST_FOLDER_PATH)}")
 print(f"[DEBUG] index.html exists: {os.path.exists(os.path.join(DIST_FOLDER_PATH, 'index.html'))}")
+
+# --- INITIALISATION DES GESTIONNAIRES ---
+try:
+    profile_manager = ProfileManager(TEMP_FOLDER_PATH)
+    pdf_generator = PDFGenerator(PDF_GEN_PATH, PROJECT_ROOT)
+    print("[INFO] Gestionnaires de profil et PDF initialisés avec succès")
+except Exception as e:
+    print(f"[WARNING] Erreur lors de l'initialisation des gestionnaires: {e}")
+    profile_manager = None
+    pdf_generator = None
 # ----------------------------------------------------
 
 # --- FONCTION UTILITAIRE POUR LE MIME TYPE ---
@@ -232,14 +252,47 @@ def api_marquer_document_signe(doc_id):
 @app.route('/api/documents/<int:doc_id>/fill', methods=['PUT'])
 def api_marquer_document_rempli(doc_id):
     try:
-        # Marquer le document comme rempli
+        # Récupérer les données envoyées
+        data = request.get_json() or {}
+        user_id = data.get('user_id', 'default_user')
+        
+        # Le profil peut être envoyé directement dans la requête
+        # Sinon, on essaie de le charger depuis le stockage
+        profile = data.get('profile', None)
+        
+        if not profile:
+            # 1. Récupérer le profil de l'utilisateur depuis le stockage
+            if not profile_manager:
+                return jsonify({"error": "Gestionnaire de profils non disponible"}), 500
+            
+            profile = profile_manager.load_profile(user_id)
+            
+            if not profile:
+                return jsonify({"error": "Profil utilisateur vide. Veuillez remplir votre profil d'abord."}), 400
+        
+        # 2. Générer le PDF
+        if not pdf_generator:
+            return jsonify({"error": "Gestionnaire PDF non disponible"}), 500
+        
+        success, result = pdf_generator.generate_pdf(profile, user_id)
+        
+        if not success:
+            return jsonify({"error": f"Erreur de génération PDF: {result}"}), 500
+        
+        pdf_path = result
+        
+        # 3. Marquer le document comme rempli dans la BDD
         if marquer_document_rempli(doc_id):
-            return jsonify({"message": f"Document ID {doc_id} marqué comme rempli."}), 200
+            # 4. Retourner le PDF généré au client pour téléchargement
+            return send_file(pdf_path, as_attachment=True, download_name="cerfa_14011-02.pdf")
         else:
             return jsonify({"error": f"Impossible de mettre à jour le document ID {doc_id}."}), 404
+    
     except Exception as e:
         print(f"Erreur lors du remplissage du document: {e}")
-        return jsonify({"error": "Erreur interne du serveur"}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Erreur interne du serveur: {str(e)}"}), 500
 
 # Endpoint pour récupérer la signature d'un document
 @app.route('/api/documents/<int:doc_id>/signature', methods=['GET'])
@@ -339,6 +392,136 @@ def serve_document_file(filename):
         return jsonify({"error": "Fichier non trouvé"}), 404
 
 # ============================================
+# ENDPOINTS POUR LA GESTION DES PROFILS
+# ============================================
+
+# Endpoint pour récupérer le schéma des champs disponibles
+@app.route('/api/profile/fields-schema', methods=['GET'])
+def api_get_fields_schema():
+    """Retourne la liste des champs disponibles"""
+    try:
+        schema = get_field_schema()
+        return jsonify(schema), 200
+    except Exception as e:
+        print(f"Erreur lors de la récupération du schéma: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+
+# Endpoint pour obtenir des suggestions de champs
+@app.route('/api/profile/suggest-fields', methods=['POST'])
+def api_suggest_fields():
+    """Suggère des champs basés sur une entrée utilisateur"""
+    try:
+        data = request.get_json() or {}
+        user_input = data.get('input', '').strip()
+        
+        if not user_input:
+            return jsonify({"error": "Entrée vide"}), 400
+        
+        suggestions = suggest_fields(user_input)
+        return jsonify({"suggestions": suggestions}), 200
+    except Exception as e:
+        print(f"Erreur lors de la suggestion de champs: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+
+# Endpoint pour récupérer le profil de l'utilisateur
+@app.route('/api/profile/<user_id>', methods=['GET'])
+def api_get_profile(user_id):
+    """Récupère le profil de l'utilisateur"""
+    try:
+        if not profile_manager:
+            return jsonify({"error": "Gestionnaire de profils non disponible"}), 500
+        
+        profile = profile_manager.load_profile(user_id)
+        stats = profile_manager.get_profile_stats(user_id)
+        
+        return jsonify({
+            "profile": profile,
+            "stats": stats
+        }), 200
+    except Exception as e:
+        print(f"Erreur lors de la récupération du profil: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+
+# Endpoint pour sauvegarder/mettre à jour le profil
+@app.route('/api/profile/<user_id>', methods=['POST', 'PUT'])
+def api_save_profile(user_id):
+    """Sauvegarde ou met à jour le profil de l'utilisateur"""
+    try:
+        data = request.get_json() or {}
+        
+        if not profile_manager:
+            return jsonify({"error": "Gestionnaire de profils non disponible"}), 500
+        
+        # Faire une mise à jour partielle si c'est un PUT
+        if request.method == 'PUT':
+            success, response = profile_manager.update_profile(data, user_id)
+        else:
+            # POST: remplacer complètement
+            success, response = profile_manager.save_profile(data, user_id)
+        
+        if success:
+            return jsonify(response), 200
+        else:
+            return jsonify(response), 400
+    
+    except Exception as e:
+        print(f"Erreur lors de la sauvegarde du profil: {e}")
+        return jsonify({"error": f"Erreur interne du serveur: {str(e)}"}), 500
+
+
+# Endpoint pour supprimer le profil
+@app.route('/api/profile/<user_id>', methods=['DELETE'])
+def api_delete_profile(user_id):
+    """Supprime le profil de l'utilisateur"""
+    try:
+        if not profile_manager:
+            return jsonify({"error": "Gestionnaire de profils non disponible"}), 500
+        
+        success, response = profile_manager.delete_profile(user_id)
+        
+        if success:
+            return jsonify(response), 200
+        else:
+            return jsonify(response), 404
+    except Exception as e:
+        print(f"Erreur lors de la suppression du profil: {e}")
+        return jsonify({"error": "Erreur interne du serveur"}), 500
+
+
+# Endpoint dédié pour générer un PDF
+@app.route('/api/generate-pdf', methods=['POST'])
+def api_generate_pdf():
+    """Génère un PDF à partir des données envoyées"""
+    try:
+        data = request.get_json() or {}
+        profile_data = data.get('profile', {})
+        user_id = data.get('user_id', 'default_user')
+        
+        if not profile_data:
+            return jsonify({"error": "Données de profil vides"}), 400
+        
+        if not pdf_generator:
+            return jsonify({"error": "Gestionnaire PDF non disponible"}), 500
+        
+        success, result = pdf_generator.generate_pdf(profile_data, user_id)
+        
+        if not success:
+            return jsonify({"error": f"Erreur de génération PDF: {result}"}), 500
+        
+        pdf_path = result
+        # Retourner le PDF comme fichier à télécharger
+        return send_file(pdf_path, as_attachment=True, download_name="cerfa_14011-02.pdf")
+    
+    except Exception as e:
+        print(f"Erreur lors de la génération du PDF: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Erreur interne du serveur: {str(e)}"}), 500
+
+# ============================================
 # ROUTES POUR SERVIR L'INTERFACE FRONTEND
 # ============================================
 
@@ -395,5 +578,5 @@ def serve_spa(path):
 if __name__ == '__main__':
     initialiser_base_de_donnees()
     print(f"\n[INFO] Dossier de documents configuré : {DATA_FOLDER_PATH}\n")
-    # Lancement du serveur Flask sur le port 5001 - SANS DEBUG et SANS RELOADER pour éviter les problèmes en arrière-plan
-    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=5001)
+    # Lancement du serveur Flask sur le port 5000 - SANS DEBUG et SANS RELOADER pour éviter les problèmes en arrière-plan
+    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=5000)
