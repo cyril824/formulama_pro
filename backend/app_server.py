@@ -578,5 +578,7 @@ def serve_spa(path):
 if __name__ == '__main__':
     initialiser_base_de_donnees()
     print(f"\n[INFO] Dossier de documents configuré : {DATA_FOLDER_PATH}\n")
-    # Lancement du serveur Flask sur le port 5000 - SANS DEBUG et SANS RELOADER pour éviter les problèmes en arrière-plan
-    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=5000)
+    # Lancement du serveur Flask sur le port 5001 avec waitress (compatible Windows)
+    from waitress import serve
+    print("[OK] Serveur PRO démarré sur http://0.0.0.0:5001")
+    serve(app, host='0.0.0.0', port=5001, threads=4)
