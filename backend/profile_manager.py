@@ -66,6 +66,9 @@ class ProfileManager:
             with open(profile_path, 'w', encoding='utf-8') as f:
                 json.dump(profile_to_save, f, indent=2, ensure_ascii=False)
             
+            # Créer automatiquement un archivage avec timestamp
+            self.archive_profile(profile_to_save, user_id)
+            
             print(f"Profil sauvegardé: {profile_path}")
             return True, {"message": "Profil sauvegardé avec succès"}
         
@@ -119,6 +122,35 @@ class ProfileManager:
             cerfa_data[field_name] = value
         
         return cerfa_data
+    
+    def archive_profile(self, profile_data, user_id="default_user"):
+        """Archive le profil avec un timestamp (comme dans l'exemple PHP)"""
+        try:
+            # Dossier d'archivage
+            archive_folder = os.path.join(os.path.dirname(self.base_path), 'data', 'profiles_archives')
+            Path(archive_folder).mkdir(parents=True, exist_ok=True)
+            
+            # Nom du fichier avec date: profile_YYYYMMDD_HHMMSS_userid.json
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            archive_filename = f"profile_{timestamp}_{user_id}.json"
+            archive_path = os.path.join(archive_folder, archive_filename)
+            
+            # Ajouter les métadonnées d'archivage
+            archive_data = {
+                **profile_data,
+                "_archived_at": datetime.now().isoformat(),
+                "_user_id": user_id
+            }
+            
+            with open(archive_path, 'w', encoding='utf-8') as f:
+                json.dump(archive_data, f, indent=2, ensure_ascii=False)
+            
+            print(f"Profil archivé: {archive_path}")
+            return True, {"archived_file": archive_filename, "path": archive_path}
+        
+        except Exception as e:
+            print(f"Erreur lors de l'archivage du profil {user_id}: {e}")
+            return False, {"error": str(e)}
     
     def get_profile_stats(self, user_id="default_user"):
         """Retourne des stats sur le profil"""

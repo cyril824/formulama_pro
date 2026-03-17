@@ -331,7 +331,7 @@ const Profile = () => {
   // é‰tat pour détection mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
-  // API URL
+  // API URL - Utilise un chemin relatif, le proxy Vite redirige vers le backend
   const API_BASE_URL = '';
 
   // Charger les données de sessionStorage au montage
@@ -357,19 +357,44 @@ const Profile = () => {
     setIsEditingProfile(true);
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setUserData(editedData);
     // Sauvegarder dans sessionStorage
     sessionStorage.setItem("userProfileData", JSON.stringify(editedData));
-    setIsEditingProfile(false);
     
-    // Afficher un message de confirmation
-    toast({
-      title: "Enregistrement réussi",
-      description: "Vos modifications ont été sauvegardées avec succé¨s.",
-      className: "bg-green-500 text-white border-0 fixed top-4 left-1/2 -translate-x-1/2 rounded-lg shadow-lg max-w-xs px-4 py-2 text-sm animate-fade-in-out",
-      duration: 3000,
-    });
+    // Envoyer les données au backend pour sauvegarde en JSON
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/profile/default_user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editedData),
+      });
+
+      if (!response.ok) {
+        console.error('Erreur lors de la sauvegarde du profil:', response.statusText);
+        throw new Error('Erreur lors de la sauvegarde du profil');
+      }
+
+      setIsEditingProfile(false);
+      
+      // Afficher un message de confirmation
+      toast({
+        title: "Enregistrement réussi",
+        description: "Vos modifications ont été sauvegardées avec succé¨s.",
+        className: "bg-green-500 text-white border-0 fixed top-4 left-1/2 -translate-x-1/2 rounded-lg shadow-lg max-w-xs px-4 py-2 text-sm animate-fade-in-out",
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la sauvegarde. Vérifiez que le serveur backend est lancé sur le port 5000.",
+        className: "bg-red-500 text-white border-0 fixed top-4 left-1/2 -translate-x-1/2 rounded-lg shadow-lg max-w-xs px-4 py-2 text-sm animate-fade-in-out",
+        duration: 3000,
+      });
+    }
   };
 
   const handleCancelEdit = () => {
